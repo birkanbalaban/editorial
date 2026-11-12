@@ -1,0 +1,6 @@
+{
+  "name": "THE EDITORIAL INDEX",
+  "description": "Autonomous Fashion Editorial Research, Selection, Approval & Instagram Publishing Platform",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
