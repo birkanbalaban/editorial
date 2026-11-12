@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AiAgentConfig, OperationMode, SystemSettings, InstagramAccountConfig } from '../types/editorial';
+import { AiAgentConfig, OperationMode, SystemSettings, InstagramAccountConfig, RssFeedConfig } from '../types/editorial';
 import { 
   Shield, 
   Zap, 
@@ -14,7 +14,12 @@ import {
   Save,
   Check,
   RefreshCw,
-  Terminal
+  Terminal,
+  Rss,
+  Plus,
+  Trash2,
+  FlaskConical,
+  Filter
 } from 'lucide-react';
 
 import { InstagramCredentialsCard } from './InstagramCredentialsCard';
@@ -24,6 +29,12 @@ interface SettingsViewProps {
   instagram: InstagramAccountConfig;
   aiConfig?: AiAgentConfig;
   geminiConnected?: boolean;
+  rssFeeds?: RssFeedConfig[];
+  excludedKeywords?: string[];
+  onAddRssFeed?: (feed: { name: string; rssUrl: string; handle: string; defaultCategory: string }) => Promise<void>;
+  onToggleRssFeed?: (feedId: string, enabled: boolean) => Promise<void>;
+  onDeleteRssFeed?: (feedId: string) => Promise<void>;
+  onUpdateExcludedKeywords?: (keywords: string[]) => Promise<void>;
   onUpdateSettings: (updates: Partial<SystemSettings>) => Promise<void>;
   onUpdateAiConfig?: (updates: Partial<AiAgentConfig>) => Promise<void>;
   onTestAiPipeline?: () => Promise<void>;
@@ -39,6 +50,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   instagram,
   aiConfig,
   geminiConnected,
+  rssFeeds = [],
+  excludedKeywords = [],
+  onAddRssFeed,
+  onToggleRssFeed,
+  onDeleteRssFeed,
+  onUpdateExcludedKeywords,
   onUpdateSettings,
   onUpdateAiConfig,
   onTestAiPipeline,
@@ -57,6 +74,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   );
   const [savedToast, setSavedToast] = useState(false);
 
+  // RSS Feed Management State
+  const [newFeedName, setNewFeedName] = useState('');
+  const [newFeedUrl, setNewFeedUrl] = useState('');
+  const [newFeedHandle, setNewFeedHandle] = useState('');
+  const [newFeedCategory, setNewFeedCategory] = useState('Fashion Editorial');
+  const [testingFeedId, setTestingFeedId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    feedLabel: string;
+    ok: boolean;
+    itemCount: number;
+    sampleItems: { title: string; link: string; author: string; pubDate: string }[];
+    error?: string;
+  } | null>(null);
+  const [keywordsText, setKeywordsText] = useState(excludedKeywords.join(', '));
+
+  useEffect(() => {
+    setKeywordsText(excludedKeywords.join(', '));
+  }, [excludedKeywords]);
+
   useEffect(() => {
     if (aiConfig) {
       setDiscoveryPrompt(aiConfig.discoveryPersonaPrompt);
@@ -66,6 +102,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setDefaultTone(aiConfig.defaultCaptionTone);
     }
   }, [aiConfig]);
+
+  const handleTestRssUrl = async (rssUrl: string, feedLabel: string, idKey: string) => {
+    if (!rssUrl.trim()) return;
+    setTestingFeedId(idKey);
+    try {
+      const res = await fetch('/api/rss/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rssUrl: rssUrl.trim() }),
+      });
+      const data = await res.json();
+      setTestResult({
+        feedLabel,
+        ok: Boolean(data.ok),
+        itemCount: data.itemCount || 0,
+        sampleItems: data.sampleItems || [],
+        error: data.error,
+      });
+    } catch (e: any) {
+      setTestResult({
+        feedLabel,
+        ok: false,
+        itemCount: 0,
+        sampleItems: [],
+        error: e?.message || 'Test request failed.',
+      });
+    } finally {
+      setTestingFeedId(null);
+    }
+  };
+
+  const handleCreateRssFeed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onAddRssFeed || !newFeedName.trim() || !newFeedUrl.trim()) return;
+    await onAddRssFeed({
+      name: newFeedName.trim(),
+      rssUrl: newFeedUrl.trim(),
+      handle: newFeedHandle.trim() || `@${newFeedName.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+      defaultCategory: newFeedCategory.trim() || 'Fashion Editorial',
+    });
+    setNewFeedName('');
+    setNewFeedUrl('');
+    setNewFeedHandle('');
+  };
+
+  const handleSaveKeywords = async () => {
+    if (!onUpdateExcludedKeywords) return;
+    const list = keywordsText
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+    await onUpdateExcludedKeywords(list);
+  };
 
   const handleSaveAiStudio = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,6 +443,211 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* 1b. DYNAMIC RSS FEEDS & SOURCE MANAGEMENT */}
+      {onAddRssFeed && (
+        <div className="p-5 sm:p-6 bg-[#121212] border border-[#262626] rounded space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222222] pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#c5a880]">
+                <Rss className="w-4 h-4 text-[#c5a880]" />
+                <span>RSS Feed & Magazine Source Control</span>
+              </div>
+              <h2 className="font-editorial text-2xl text-[#f4f3ef]">
+                Manage Live Editorial Feeds & Exclusion Filters
+              </h2>
+              <p className="text-xs text-[#8e8d8a] max-w-3xl font-sans">
+                Enable, disable, test, or add new fashion magazine/blog RSS feeds. Agent 1 reads exclusively from active sources listed below.
+              </p>
+            </div>
+            <span className="text-xs font-mono text-[#a3e635] shrink-0">
+              {rssFeeds.filter((f) => f.enabled).length} / {rssFeeds.length} Feeds Active
+            </span>
+          </div>
+
+          {/* Add New RSS Source Form */}
+          <form onSubmit={handleCreateRssFeed} className="p-4 bg-[#161616] border border-[#262626] rounded space-y-3">
+            <div className="text-xs font-mono uppercase tracking-wider text-[#f4f3ef]">
+              Add New Magazine or Blog RSS Feed
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <input
+                type="text"
+                required
+                placeholder="Publication Name (e.g. AnOther)"
+                value={newFeedName}
+                onChange={(e) => setNewFeedName(e.target.value)}
+                className="bg-[#0a0a0a] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
+              />
+              <input
+                type="url"
+                required
+                placeholder="https://www.anothermag.com/feed"
+                value={newFeedUrl}
+                onChange={(e) => setNewFeedUrl(e.target.value)}
+                className="md:col-span-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
+              />
+              <input
+                type="text"
+                placeholder="@handle (optional)"
+                value={newFeedHandle}
+                onChange={(e) => setNewFeedHandle(e.target.value)}
+                className="bg-[#0a0a0a] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <input
+                type="text"
+                placeholder="Default Category (e.g. Avant-Garde Editorial)"
+                value={newFeedCategory}
+                onChange={(e) => setNewFeedCategory(e.target.value)}
+                className="w-full sm:w-72 bg-[#0a0a0a] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!newFeedUrl.trim() || testingFeedId !== null}
+                  onClick={() => handleTestRssUrl(newFeedUrl, newFeedName || 'New RSS Feed', 'NEW_FEED')}
+                  className="px-3.5 py-2 bg-[#1e1e1e] hover:bg-[#282828] border border-[#333333] text-xs font-mono text-[#d4d4d8] rounded transition cursor-pointer flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <FlaskConical className="w-3.5 h-3.5 text-[#c5a880]" />
+                  <span>{testingFeedId === 'NEW_FEED' ? 'Testing...' : 'Test Feed URL'}</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  className="px-4 py-2 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] text-xs font-mono font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add RSS Feed</span>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {/* Live RSS Test Preview Box */}
+          {testResult && (
+            <div
+              className={`p-4 rounded border space-y-2 text-xs font-mono ${
+                testResult.ok
+                  ? 'bg-[#131d13] border-[#264226] text-[#d4d4d8]'
+                  : 'bg-[#261414] border-[#4d2222] text-[#fca5a5]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">
+                  Test Result for "{testResult.feedLabel}":{' '}
+                  {testResult.ok
+                    ? `OK (${testResult.itemCount} articles parsed)`
+                    : testResult.error || 'Failed'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTestResult(null)}
+                  className="text-[#8e8d8a] hover:text-white cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+              {testResult.sampleItems.length > 0 && (
+                <ul className="space-y-1 text-[11px] text-[#a1a1aa] pt-1 border-t border-[#222222]">
+                  {testResult.sampleItems.map((it, idx) => (
+                    <li key={idx} className="truncate">
+                      • [{it.pubDate}] {it.title} ({it.author})
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Configured RSS Feeds List */}
+          <div className="bg-[#0e0e0e] border border-[#222222] rounded divide-y divide-[#1e1e1e] overflow-hidden">
+            {rssFeeds.map((feed) => (
+              <div
+                key={feed.id}
+                className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#151515] transition text-xs font-mono"
+              >
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[#f4f3ef] font-semibold">{feed.name}</span>
+                    <span className="text-[#c5a880] text-[11px]">{feed.handle}</span>
+                    <span className="text-[#71717a] text-[11px]">· {feed.defaultCategory}</span>
+                  </div>
+                  <div className="text-[11px] text-[#71717a] truncate">{feed.rssUrl}</div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleTestRssUrl(feed.rssUrl, feed.name, feed.id)}
+                    disabled={testingFeedId !== null}
+                    className="px-2.5 py-1.5 bg-[#1a1a1a] hover:bg-[#242424] border border-[#2e2e2e] text-[#d4d4d8] rounded text-[11px] cursor-pointer flex items-center gap-1"
+                  >
+                    <FlaskConical className="w-3 h-3 text-[#c5a880]" />
+                    <span>{testingFeedId === feed.id ? 'Testing...' : 'Test'}</span>
+                  </button>
+
+                  {onToggleRssFeed && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleRssFeed(feed.id, !feed.enabled)}
+                      className={`px-3 py-1.5 rounded text-[11px] uppercase cursor-pointer border transition ${
+                        feed.enabled
+                          ? 'bg-[#182618] text-[#a3e635] border-[#264226]'
+                          : 'bg-[#1a1a1a] text-[#71717a] border-[#2a2a2a]'
+                      }`}
+                    >
+                      {feed.enabled ? 'Active' : 'Paused'}
+                    </button>
+                  )}
+
+                  {onDeleteRssFeed && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteRssFeed(feed.id)}
+                      title="Remove RSS feed"
+                      className="p-1.5 text-[#71717a] hover:text-[#ef4444] rounded hover:bg-[#1f1f1f] transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Commercial / Non-Editorial Exclusion Filter */}
+          {onUpdateExcludedKeywords && (
+            <div className="p-4 bg-[#161616] border border-[#262626] rounded space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#c5a880]">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Excluded Non-Editorial Keywords (Comma Separated)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveKeywords}
+                  disabled={isProcessing}
+                  className="px-3 py-1.5 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] text-[11px] font-mono font-semibold uppercase rounded cursor-pointer"
+                >
+                  Save Filters
+                </button>
+              </div>
+              <input
+                type="text"
+                value={keywordsText}
+                onChange={(e) => setKeywordsText(e.target.value)}
+                placeholder="rolex, men's shoes, rimowa, handbags, gift guide..."
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded px-3 py-2 text-xs font-mono text-[#f4f3ef] focus:outline-none focus:border-[#c5a880]"
+              />
+              <p className="text-[11px] text-[#8e8d8a] font-sans">
+                Articles containing any of these terms are automatically skipped during live RSS discovery so only true fashion photography series enter your index.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -205,6 +205,21 @@ export const AutomationEngineView: React.FC<AutomationEngineViewProps> = ({
                         )}
                       </div>
                       <p className="text-[#a1a1aa] font-sans mt-0.5">{log.summary}</p>
+                      {log.details && (
+                        <details className="mt-2">
+                          <summary className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] cursor-pointer hover:underline select-none">
+                            RSS & Extraction Log Details
+                          </summary>
+                          <div className="mt-1.5 p-2.5 bg-[#0a0a0a] border border-[#222222] rounded text-[11px] font-mono text-[#8e8d8a] space-y-1">
+                            {log.details.split(' | ').map((line, i) => (
+                              <div key={i} className="flex items-start gap-1.5">
+                                <span className="text-[#c5a880]">›</span>
+                                <span className="break-words">{line}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
                     </div>
                   </div>
 

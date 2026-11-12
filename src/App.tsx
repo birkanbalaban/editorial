@@ -6,7 +6,8 @@ import {
   SystemSettings, 
   WorkflowExecutionLog,
   EditorialLearningSignal,
-  EditorialEngagementPoint
+  EditorialEngagementPoint,
+  RssFeedConfig
 } from './types/editorial';
 import { Header } from './components/Header';
 import { DailySelectionView } from './components/DailySelectionView';
@@ -19,7 +20,7 @@ import { EditorialLearningView } from './components/EditorialLearningView';
 import { EditorialEngagementChart } from './components/EditorialEngagementChart';
 import { SettingsView } from './components/SettingsView';
 import { CaptionEditorModal } from './components/CaptionEditorModal';
-import { AiResearchModal } from './components/AiResearchModal';
+import { AiResearchModal, ManualPostSubmissionPayload } from './components/AiResearchModal';
 import { AutopilotConfirmModal } from './components/AutopilotConfirmModal';
 import { AgentIntegrationModal } from './components/AgentIntegrationModal';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
@@ -82,6 +83,8 @@ export default function App() {
   const [workflowLogs, setWorkflowLogs] = useState<WorkflowExecutionLog[]>([]);
   const [learningSignals, setLearningSignals] = useState<EditorialLearningSignal[]>([]);
   const [engagementPoints, setEngagementPoints] = useState<EditorialEngagementPoint[]>([]);
+  const [rssFeeds, setRssFeeds] = useState<RssFeedConfig[]>([]);
+  const [excludedKeywords, setExcludedKeywords] = useState<string[]>([]);
 
   // UI Modals
   const [editingPost, setEditingPost] = useState<EditorialPost | null>(null);
@@ -137,6 +140,14 @@ export default function App() {
       if (analyticsRes.ok) {
         const analyticsData = await analyticsRes.json();
         setEngagementPoints(analyticsData.points || []);
+      }
+
+      // 5. RSS Feeds & Filters
+      const rssRes = await fetch('/api/rss/feeds');
+      if (rssRes.ok) {
+        const rssData = await rssRes.json();
+        setRssFeeds(rssData.feeds || []);
+        setExcludedKeywords(rssData.excludedKeywords || []);
       }
     } catch (e) {
       console.error('Failed to fetch application data:', e);
@@ -398,30 +409,108 @@ export default function App() {
     }
   };
 
-  const handleAiResearchSubmit = async (data: {
-    title: string;
-    photographer: string;
-    publication: string;
-    styling?: string;
-    notes?: string;
-    imageUrl?: string;
-  }) => {
+  const handleAiResearchSubmit = async (data: ManualPostSubmissionPayload) => {
     setIsProcessing(true);
     try {
-      const res = await fetch('/api/ai/research-now', {
+      const res = await fetch('/api/posts/manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       const resData = await res.json();
       if (!res.ok) {
-        showToast(resData.error || 'AI Research evaluation failed.', 'error');
+        showToast(resData.error || 'Failed to add editorial post.', 'error');
       } else {
-        showToast(`AI evaluated and curated: "${resData.post.title}" (Score: ${resData.post.score.overall}/100)`);
+        const destLabel =
+          data.targetStatus === 'approved'
+            ? 'Post Packages'
+            : data.targetStatus === 'selected'
+            ? 'Approval Queue'
+            : 'Daily Selection';
+        showToast(`Created "${resData.post.title}" (${resData.post.imageUrls.length} frames) → ${destLabel}`);
         await loadAllData();
       }
     } catch (e: any) {
       showToast(e.message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAddRssFeed = async (feed: {
+    name: string;
+    rssUrl: string;
+    handle: string;
+    defaultCategory: string;
+  }) => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/rss/feeds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feed),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to add RSS feed.', 'error');
+      } else {
+        setRssFeeds(data.feeds || []);
+        showToast(`Added RSS feed "${feed.name}".`);
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Error adding RSS feed.', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleToggleRssFeed = async (feedId: string, enabled: boolean) => {
+    try {
+      const res = await fetch(`/api/rss/feeds/${feedId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRssFeeds(data.feeds || []);
+        showToast(enabled ? 'RSS feed activated.' : 'RSS feed paused.');
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update RSS feed.', 'error');
+    }
+  };
+
+  const handleDeleteRssFeed = async (feedId: string) => {
+    try {
+      const res = await fetch(`/api/rss/feeds/${feedId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRssFeeds(data.feeds || []);
+        showToast('RSS feed removed.');
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Failed to remove RSS feed.', 'error');
+    }
+  };
+
+  const handleUpdateExcludedKeywords = async (keywords: string[]) => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/rss/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excludedKeywords: keywords }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setExcludedKeywords(data.excludedKeywords || []);
+        showToast(`Updated ${data.excludedKeywords?.length || 0} exclusion keyword(s).`);
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update exclusion keywords.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -525,6 +614,7 @@ export default function App() {
           <DailySelectionView
             top5Posts={top5Posts}
             candidates={candidates}
+            savedPosts={allPosts.filter((p) => p.status === 'saved')}
             onAction={handlePostAction}
             onOpenCaptionEditor={(post) => setEditingPost(post)}
             onOpenAiResearch={() => setIsAiResearchOpen(true)}
@@ -537,6 +627,7 @@ export default function App() {
           <AiSearchEngineView
             posts={allPosts}
             aiConfig={aiAgentConfig}
+            rssFeeds={rssFeeds}
             onUpdateAiConfig={handleUpdateAiConfig}
             onDiscoverBatch={handleDiscoverBatch}
             onDeduplicate={handleDeduplicate}
@@ -619,6 +710,12 @@ export default function App() {
             instagram={instagram}
             aiConfig={aiAgentConfig}
             geminiConnected={geminiConnected}
+            rssFeeds={rssFeeds}
+            excludedKeywords={excludedKeywords}
+            onAddRssFeed={handleAddRssFeed}
+            onToggleRssFeed={handleToggleRssFeed}
+            onDeleteRssFeed={handleDeleteRssFeed}
+            onUpdateExcludedKeywords={handleUpdateExcludedKeywords}
             onUpdateSettings={handleUpdateSettings}
             onUpdateAiConfig={handleUpdateAiConfig}
             onTestAiPipeline={async () => {

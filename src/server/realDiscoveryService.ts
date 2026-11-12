@@ -1,5 +1,5 @@
 import { calculateEditorialScore, calculatePostLearningDelta, computeLearningProfile } from '../lib/scoring';
-import { AiAgentConfig, EditorialLearningSignal, EditorialPost, RightsStatus } from '../types/editorial';
+import { AiAgentConfig, EditorialLearningSignal, EditorialPost, RightsStatus, RssFeedConfig } from '../types/editorial';
 import { auditEditorialCandidateWithGemini } from './geminiService';
 
 export interface ScrapedEditorialSource {
@@ -92,7 +92,11 @@ export function normalizeTitleKey(title: string): string {
  * sports news, TV roundups, and celebrity tabloid items so ONLY genuine fashion editorial shoots
  * and photographic stories enter the index.
  */
-export function isCommercialProductOrNonEditorial(title: string, url: string): boolean {
+export function isCommercialProductOrNonEditorial(
+  title: string,
+  url: string,
+  customExcludedKeywords: string[] = []
+): boolean {
   const hay = `${title} ${url}`.toLowerCase();
 
   // Exclude non-fashion categories on multi-topic magazines
@@ -107,6 +111,13 @@ export function isCommercialProductOrNonEditorial(title: string, url: string): b
     return true;
   }
 
+  for (const kw of customExcludedKeywords) {
+    const cleanKw = kw.trim().toLowerCase();
+    if (cleanKw.length > 1 && hay.includes(cleanKw)) {
+      return true;
+    }
+  }
+
   // Exclude shopping roundups, product launches (shoes, Rolex watches, Rimowa luggage, bags, coats), & celebrity gossip
   const productOrTabloidPattern =
     /\b(men’s shoes|men's shoes|high shine|rolex|watchmaking|watches|luggage|rimowa|handbags|80 handbags|le city|irresistible .* coats|winter coats|coat collections|timeless coats|mules and slippers|wellington boots|pop-up stores|vintage stores| vintage shops|halloween costumes|met gala|ballon d'or|soccer|tv shows|most anticipated shows|horoscope|astrology|gta vi|kim kardashian|victoria's secret|victoria&#039;s secret|mariah carey|harry styles|quit smoking|crystal lake)\b/i;
@@ -119,7 +130,7 @@ export function isCommercialProductOrNonEditorial(title: string, url: string): b
  * (e.g. "Love Affair: A passionate fashion series by Txema Yeste" -> "Txema Yeste",
  *  "25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967" -> "Richard Avedon").
  */
-function extractEditorialPhotographer(title: string, description: string, fallbackAuthor: string, pubName: string): string {
+export function extractEditorialPhotographer(title: string, description: string, fallbackAuthor: string, pubName: string): string {
   const combined = `${title} — ${description}`;
 
   const bySeriesMatch = title.match(/(?:fashion series|fashion story|photographed|lens)\s+by\s+([A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ]+(?:\s+[A-ZÀ-ÖØ-Þa-zà-öø-ÿ-]+){1,3})/i);
@@ -508,6 +519,51 @@ async function fetchArticlesFromMagazineFeed(
   }
 }
 
+export async function testLiveRssFeed(rssUrl: string): Promise<{
+  ok: boolean;
+  itemCount: number;
+  sampleItems: { title: string; link: string; author: string; pubDate: string }[];
+  error?: string;
+}> {
+  try {
+    const articles = await fetchArticlesFromMagazineFeed(
+      {
+        id: 'test-feed',
+        name: 'Custom Feed',
+        rssUrl,
+        handle: '@editorial',
+        defaultCategory: 'Editorial',
+      },
+      8
+    );
+    if (articles.length === 0) {
+      return {
+        ok: false,
+        itemCount: 0,
+        sampleItems: [],
+        error: 'Feed responded with 0 valid RSS/Atom items or could not be parsed.',
+      };
+    }
+    return {
+      ok: true,
+      itemCount: articles.length,
+      sampleItems: articles.slice(0, 5).map((a) => ({
+        title: a.title,
+        link: a.link,
+        author: a.author,
+        pubDate: a.pubDate,
+      })),
+    };
+  } catch (e: any) {
+    return {
+      ok: false,
+      itemCount: 0,
+      sampleItems: [],
+      error: e?.message || 'Failed to reach RSS endpoint.',
+    };
+  }
+}
+
 /**
  * Converts a real scraped magazine article + its coherent shoot photographs into an EditorialPost.
  */
@@ -616,6 +672,8 @@ export async function discoverRealEditorials(params: {
   aiConfig: AiAgentConfig;
   existingPosts: EditorialPost[];
   learningSignals?: EditorialLearningSignal[];
+  rssFeeds?: RssFeedConfig[];
+  excludedKeywords?: string[];
 }): Promise<{
   posts: EditorialPost[];
   steps: string[];
@@ -623,6 +681,7 @@ export async function discoverRealEditorials(params: {
   const count = Math.min(6, Math.max(1, params.count || params.aiConfig.defaultBatchSize || 2));
   const query = (params.query || '').trim();
   const signals = params.learningSignals || [];
+  const excludedKeywords = params.excludedKeywords || [];
   const learningProfile = computeLearningProfile(signals);
   const steps: string[] = [];
 
@@ -674,13 +733,18 @@ export async function discoverRealEditorials(params: {
     }
   }
 
-  // CASE 2: Fetch live fashion editorial shoots from Numéro, Vogue Runway, Interview Magazine, and Dazed
+  // CASE 2: Fetch live fashion editorial shoots from configured active RSS feeds
+  const configuredFeeds: LiveMagazineFeedSource[] =
+    params.rssFeeds && params.rssFeeds.length > 0
+      ? params.rssFeeds.filter((f) => f.enabled)
+      : LIVE_MAGAZINE_FEEDS;
+
   steps.push(
-    `Connecting to live fashion photography feeds: Numéro Fashion Series, Vogue Runway & Archive, Interview Magazine, Dazed Photography...`
+    `Connecting to ${configuredFeeds.length} active RSS feed(s): ${configuredFeeds.map((f) => f.name).join(', ')}...`
   );
 
   const feedResults = await Promise.all(
-    LIVE_MAGAZINE_FEEDS.map((feed) => fetchArticlesFromMagazineFeed(feed, 10))
+    configuredFeeds.map((feed) => fetchArticlesFromMagazineFeed(feed, 10))
   );
 
   // Interleave articles across publications so the feed has rich editorial variety
@@ -708,7 +772,7 @@ export async function discoverRealEditorials(params: {
       const tKey = normalizeTitleKey(art.title);
       const uKey = art.link.split('?')[0];
       if (existingTitleKeys.has(tKey) || existingUrls.has(uKey)) return false;
-      if (isCommercialProductOrNonEditorial(art.title, art.link)) return false;
+      if (isCommercialProductOrNonEditorial(art.title, art.link, excludedKeywords)) return false;
       return true;
     })
     .map((art, orderIdx) => {

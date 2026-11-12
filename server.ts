@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { db } from './src/server/db';
@@ -10,7 +12,9 @@ import {
 } from './src/server/geminiService';
 import {
   discoverRealEditorials,
+  extractEditorialPhotographer,
   scrapeImagesAndMetadataFromUrl,
+  testLiveRssFeed,
 } from './src/server/realDiscoveryService';
 import { InstagramAdapter } from './src/server/instagramAdapter';
 import { canActivateAutopilot, canPublish, computeContentHash } from './src/lib/publishingRules';
@@ -18,11 +22,18 @@ import { calculatePostLearningDelta, computeLearningProfile, rankCandidates, sel
 import { calculateAggregateMetrics } from './src/lib/analytics';
 import { EditorialEngagementPoint, EditorialPost } from './src/types/editorial';
 
+const UPLOADS_DIR = path.resolve(process.cwd(), '.data', 'uploads');
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  app.use(express.json({ limit: '25mb' }));
+  app.use('/uploads', express.static(UPLOADS_DIR));
 
   // 1. System Status
   app.get('/api/status', (req, res) => {
@@ -633,6 +644,191 @@ async function startServer() {
     }
   });
 
+  // 9b-1. Upload local image files from user's computer
+  app.post('/api/uploads', (req, res) => {
+    try {
+      const files = Array.isArray(req.body?.files) ? req.body.files : [];
+      if (files.length === 0) {
+        return res.status(400).json({ error: 'No image files provided.' });
+      }
+      const urls: string[] = [];
+      for (const file of files.slice(0, 10)) {
+        const dataUrl = String(file?.dataUrl || '');
+        const match = dataUrl.match(/^data:image\/(png|jpeg|jpg|webp|gif);base64,(.+)$/i);
+        if (!match) continue;
+        const ext = match[1].toLowerCase() === 'jpeg' ? 'jpg' : match[1].toLowerCase();
+        const buffer = Buffer.from(match[2], 'base64');
+        const safeName = `editorial-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+        fs.writeFileSync(path.join(UPLOADS_DIR, safeName), buffer);
+        urls.push(`/uploads/${safeName}`);
+      }
+      if (urls.length === 0) {
+        return res.status(400).json({ error: 'Invalid image data format. Please upload PNG, JPG, or WEBP files.' });
+      }
+      res.json({ success: true, urls });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Image upload failed.' });
+    }
+  });
+
+  // 9b-2. Scrape any blog or magazine article URL for title, author, summary, and body images
+  app.post('/api/ai/scrape-url', async (req, res) => {
+    const url = String(req.body?.url || '').trim();
+    if (!url || !/^https?:\/\/\S+/i.test(url)) {
+      return res.status(400).json({ error: 'Valid http/https article URL is required.' });
+    }
+    try {
+      const scraped = await scrapeImagesAndMetadataFromUrl(url);
+      let host = 'Editorial Blog';
+      try {
+        host = new URL(url).hostname.replace(/^www\./, '');
+      } catch {
+        // ignore
+      }
+      const pubName = scraped.siteName || host.toUpperCase();
+      const resolvedAuthor = extractEditorialPhotographer(
+        scraped.title || '',
+        scraped.description || '',
+        scraped.author || '',
+        pubName
+      );
+      res.json({
+        success: true,
+        url,
+        title: scraped.title || '',
+        description: scraped.description || '',
+        publication: pubName,
+        author: resolvedAuthor,
+        images: scraped.images || [],
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to extract article metadata & images.' });
+    }
+  });
+
+  // 9b-3. Create manual / imported URL editorial post directly into Daily Selection, Approval Queue, or Post Packages
+  app.post('/api/posts/manual', async (req, res) => {
+    try {
+      const {
+        title,
+        photographer,
+        publication,
+        stylist,
+        notes,
+        caption,
+        hashtags,
+        sourceUrl,
+        imageUrls,
+        candidateImages,
+        targetStatus,
+      } = req.body || {};
+
+      if (!title || !photographer || !publication) {
+        return res.status(400).json({ error: 'Title, Photographer/Author, and Publication/Source are required.' });
+      }
+
+      const selectedImages: string[] = Array.isArray(imageUrls)
+        ? imageUrls.filter((u: any) => typeof u === 'string' && u.trim().length > 0)
+        : [];
+      const galleryImages: string[] = Array.isArray(candidateImages) && candidateImages.length > 0
+        ? candidateImages.filter((u: any) => typeof u === 'string' && u.trim().length > 0)
+        : selectedImages;
+
+      if (selectedImages.length === 0) {
+        return res.status(400).json({ error: 'At least one photograph is required for the post.' });
+      }
+
+      const evaluation = await evaluateEditorialWithGemini(
+        title,
+        photographer,
+        publication,
+        stylist,
+        notes
+      );
+
+      const finalStatus: EditorialPost['status'] =
+        targetStatus === 'approved'
+          ? 'approved'
+          : targetStatus === 'selected'
+          ? 'selected'
+          : 'candidate';
+
+      const parsedHashtags: string[] = Array.isArray(hashtags) && hashtags.length > 0
+        ? hashtags
+        : typeof hashtags === 'string' && hashtags.trim().length > 0
+        ? hashtags
+            .split(/[\s,]+/)
+            .map((h: string) => (h.startsWith('#') ? h : `#${h}`))
+            .filter((h: string) => h.length > 1)
+        : evaluation.hashtags;
+
+      const resolvedCaption =
+        typeof caption === 'string' && caption.trim().length > 0
+          ? caption.trim()
+          : evaluation.caption;
+
+      const cleanUrl =
+        typeof sourceUrl === 'string' && /^https?:\/\/\S+/i.test(sourceUrl.trim())
+          ? sourceUrl.trim()
+          : '';
+
+      const newPost: EditorialPost = {
+        id: `ed-manual-${Date.now()}`,
+        title: title.trim(),
+        photographer: photographer.trim(),
+        publication: publication.trim(),
+        stylist: stylist?.trim() || undefined,
+        publicationDate: new Date().toISOString().split('T')[0],
+        sourceUrl: cleanUrl,
+        imageUrls: selectedImages,
+        candidateImages: Array.from(new Set([...selectedImages, ...galleryImages])),
+        aspectRatio: '3:4',
+        score: evaluation.score,
+        creativeDirection: notes?.trim() || evaluation.creativeDirection,
+        rightsStatus: 'verified',
+        rightsVerificationRecord: {
+          sourceLicense: cleanUrl ? `Imported Editorial Source · ${publication.trim()}` : 'Manual Direct Submission',
+          verifiedAt: new Date().toISOString(),
+          authorizedForSocialMedia: true,
+          usageNotes: cleanUrl
+            ? `Imported manually from ${cleanUrl}.`
+            : 'Created manually by editorial team.',
+        },
+        publishingReadiness: 'ready',
+        caption: resolvedCaption,
+        hashtags: parsedHashtags,
+        altText: evaluation.altText,
+        credits: {
+          photographer: photographer.trim(),
+          stylist: stylist?.trim() || undefined,
+          publication: publication.trim(),
+        },
+        isDailyTop5: finalStatus === 'candidate',
+        isCandidate: finalStatus === 'candidate',
+        status: finalStatus,
+        ...(finalStatus === 'approved'
+          ? {
+              approvalRecord: {
+                approvedBy: 'Editorial Director (Manual Studio)',
+                approvedAt: new Date().toISOString(),
+                version: 1,
+                scheduledFor: 'Manual Package Ready',
+              },
+            }
+          : {}),
+      };
+
+      const added = db.addPost(newPost);
+      if (!added) {
+        return res.status(409).json({ error: 'An editorial with this exact title already exists in the index.' });
+      }
+
+      res.json({ success: true, post: newPost });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to create manual editorial post.' });
+    }
+  });
+
   // 9c. Dual-Agent AI Configuration (Agent 1 Discovery + Agent 2 Auditor)
   app.get('/api/ai/config', (req, res) => {
     res.json({ aiAgentConfig: db.getAiAgentConfig() });
@@ -641,6 +837,59 @@ async function startServer() {
   app.post('/api/ai/config', (req, res) => {
     const updated = db.updateAiAgentConfig(req.body || {});
     res.json({ success: true, aiAgentConfig: updated });
+  });
+
+  // 9c-2. Dynamic RSS Feeds & Exclusion Filter Management
+  app.get('/api/rss/feeds', (req, res) => {
+    res.json({
+      feeds: db.getRssFeeds(),
+      excludedKeywords: db.getExcludedKeywords(),
+    });
+  });
+
+  app.post('/api/rss/feeds', (req, res) => {
+    const { name, rssUrl, handle, defaultCategory, enabled } = req.body || {};
+    if (!name || !rssUrl || !/^https?:\/\/\S+/i.test(String(rssUrl).trim())) {
+      return res.status(400).json({ error: 'Valid feed name and http/https RSS URL are required.' });
+    }
+    const created = db.addRssFeed({
+      name: String(name).trim(),
+      rssUrl: String(rssUrl).trim(),
+      handle: String(handle || `@${String(name).toLowerCase().replace(/[^a-z0-9]/g, '')}`).trim(),
+      defaultCategory: String(defaultCategory || 'Fashion Editorial').trim(),
+      enabled: typeof enabled === 'boolean' ? enabled : true,
+    });
+    res.json({ success: true, feed: created, feeds: db.getRssFeeds() });
+  });
+
+  app.patch('/api/rss/feeds/:id', (req, res) => {
+    const updated = db.updateRssFeed(req.params.id, req.body || {});
+    if (!updated) return res.status(404).json({ error: 'RSS feed not found.' });
+    res.json({ success: true, feed: updated, feeds: db.getRssFeeds() });
+  });
+
+  app.delete('/api/rss/feeds/:id', (req, res) => {
+    db.removeRssFeed(req.params.id);
+    res.json({ success: true, feeds: db.getRssFeeds() });
+  });
+
+  app.post('/api/rss/test', async (req, res) => {
+    const rssUrl = String(req.body?.rssUrl || '').trim();
+    if (!rssUrl || !/^https?:\/\/\S+/i.test(rssUrl)) {
+      return res.status(400).json({ error: 'Valid RSS URL is required.' });
+    }
+    const result = await testLiveRssFeed(rssUrl);
+    res.json(result);
+  });
+
+  app.post('/api/rss/filters', (req, res) => {
+    const keywords = Array.isArray(req.body?.excludedKeywords)
+      ? req.body.excludedKeywords
+      : typeof req.body?.excludedKeywords === 'string'
+      ? req.body.excludedKeywords.split(',')
+      : [];
+    const updated = db.updateExcludedKeywords(keywords);
+    res.json({ success: true, excludedKeywords: updated });
   });
 
   // 9d. AGENT 1 + AGENT 2: Real Archival & Live URL Body Image Discovery + Deduplication
@@ -656,6 +905,8 @@ async function startServer() {
         aiConfig,
         existingPosts: db.getPosts(),
         learningSignals: db.getState().learningSignals,
+        rssFeeds: db.getRssFeeds(),
+        excludedKeywords: db.getExcludedKeywords(),
       });
 
       const addedPosts: EditorialPost[] = [];
@@ -908,6 +1159,8 @@ async function startServer() {
       count: 6,
       aiConfig: db.getAiAgentConfig(),
       existingPosts: [],
+      rssFeeds: db.getRssFeeds(),
+      excludedKeywords: db.getExcludedKeywords(),
     })
       .then(({ posts }) => {
         posts.forEach((post, i) => {

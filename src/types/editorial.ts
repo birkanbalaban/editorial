@@ -176,3 +176,12 @@ export interface EditorialEngagementPoint {
   syncedAt?: string;
 }
 
+export interface RssFeedConfig {
+  id: string;
+  name: string;
+  rssUrl: string;
+  handle: string;
+  defaultCategory: string;
+  enabled: boolean;
+}
+

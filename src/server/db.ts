@@ -7,7 +7,8 @@ import {
   WorkflowExecutionLog,
   EditorialLearningSignal,
   EditorialEngagementPoint,
-  AiAgentConfig
+  AiAgentConfig,
+  RssFeedConfig
 } from '../types/editorial';
 import { computeContentHash } from '../lib/publishingRules';
 
@@ -19,6 +20,8 @@ export interface DatabaseState {
   settings: SystemSettings;
   instagram: InstagramAccountConfig;
   aiAgentConfig: AiAgentConfig;
+  rssFeeds: RssFeedConfig[];
+  excludedKeywords: string[];
   workflowLogs: WorkflowExecutionLog[];
   learningSignals: EditorialLearningSignal[];
   engagementPoints: EditorialEngagementPoint[];
@@ -463,6 +466,72 @@ const DEFAULT_WORKFLOWS: WorkflowExecutionLog[] = [
   },
 ];
 
+const DEFAULT_RSS_FEEDS: RssFeedConfig[] = [
+  {
+    id: 'numero-series-1',
+    name: 'Numéro Magazine',
+    rssUrl: 'https://numero.com/en/?s=fashion+series&feed=rss2',
+    handle: '@numeromagazine',
+    defaultCategory: 'High-Fashion Editorial Series',
+    enabled: true,
+  },
+  {
+    id: 'vogue-runway',
+    name: 'Vogue',
+    rssUrl: 'https://www.vogue.com/feed/runway/rss',
+    handle: '@voguemagazine',
+    defaultCategory: 'Archival & Runway Monograph',
+    enabled: true,
+  },
+  {
+    id: 'interview-fashion',
+    name: 'Interview Magazine',
+    rssUrl: 'https://www.interviewmagazine.com/category/fashion/feed',
+    handle: '@interviewmag',
+    defaultCategory: 'Editorial Portraiture & Styling',
+    enabled: true,
+  },
+  {
+    id: 'dazed',
+    name: 'Dazed Digital',
+    rssUrl: 'https://www.dazeddigital.com/rss',
+    handle: '@dazed',
+    defaultCategory: 'Avant-Garde Photography & Fashion',
+    enabled: true,
+  },
+  {
+    id: 'numero-series-2',
+    name: 'Numéro Magazine (Archive)',
+    rssUrl: 'https://numero.com/en/page/2/?s=fashion+series&feed=rss2',
+    handle: '@numeromagazine',
+    defaultCategory: 'Photographic Fashion Story',
+    enabled: true,
+  },
+  {
+    id: 'interview-photo',
+    name: 'Interview Magazine (Photo)',
+    rssUrl: 'https://www.interviewmagazine.com/?s=photographed+by&feed=rss2',
+    handle: '@interviewmag',
+    defaultCategory: 'Photographer Monograph',
+    enabled: true,
+  },
+];
+
+const DEFAULT_EXCLUDED_KEYWORDS: string[] = [
+  "men's shoes",
+  'rolex',
+  'watchmaking',
+  'watches',
+  'luggage',
+  'rimowa',
+  'handbags',
+  'winter coats',
+  'gift guide',
+  'tv shows',
+  'horoscope',
+  'soccer',
+];
+
 const DEFAULT_LEARNING_SIGNALS: EditorialLearningSignal[] = [];
 
 const DEFAULT_ENGAGEMENT_POINTS: EditorialEngagementPoint[] = [];
@@ -533,6 +602,12 @@ class Database {
     }
     if (!this.state.aiAgentConfig) {
       this.state.aiAgentConfig = DEFAULT_AI_AGENT_CONFIG;
+    }
+    if (!Array.isArray(this.state.rssFeeds) || this.state.rssFeeds.length === 0) {
+      this.state.rssFeeds = DEFAULT_RSS_FEEDS;
+    }
+    if (!Array.isArray(this.state.excludedKeywords)) {
+      this.state.excludedKeywords = DEFAULT_EXCLUDED_KEYWORDS;
     }
     this.deduplicatePosts();
     this.purgeLegacyAnalyticsAndSignals();
@@ -627,6 +702,12 @@ class Database {
         if (!parsed.aiAgentConfig) {
           parsed.aiAgentConfig = DEFAULT_AI_AGENT_CONFIG;
         }
+        if (!Array.isArray(parsed.rssFeeds)) {
+          parsed.rssFeeds = DEFAULT_RSS_FEEDS;
+        }
+        if (!Array.isArray(parsed.excludedKeywords)) {
+          parsed.excludedKeywords = DEFAULT_EXCLUDED_KEYWORDS;
+        }
         return parsed;
       }
     } catch (e) {
@@ -638,6 +719,8 @@ class Database {
       settings: DEFAULT_SETTINGS,
       instagram: DEFAULT_INSTAGRAM,
       aiAgentConfig: DEFAULT_AI_AGENT_CONFIG,
+      rssFeeds: DEFAULT_RSS_FEEDS,
+      excludedKeywords: DEFAULT_EXCLUDED_KEYWORDS,
       workflowLogs: DEFAULT_WORKFLOWS,
       learningSignals: DEFAULT_LEARNING_SIGNALS,
       engagementPoints: DEFAULT_ENGAGEMENT_POINTS,
@@ -731,6 +814,53 @@ class Database {
     };
     this.save();
     return this.state.aiAgentConfig;
+  }
+
+  public getRssFeeds(): RssFeedConfig[] {
+    if (!Array.isArray(this.state.rssFeeds) || this.state.rssFeeds.length === 0) {
+      this.state.rssFeeds = DEFAULT_RSS_FEEDS;
+    }
+    return this.state.rssFeeds;
+  }
+
+  public addRssFeed(feed: Omit<RssFeedConfig, 'id'>): RssFeedConfig {
+    const newFeed: RssFeedConfig = {
+      ...feed,
+      id: `rss-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    };
+    this.state.rssFeeds = [newFeed, ...this.getRssFeeds()];
+    this.save();
+    return newFeed;
+  }
+
+  public updateRssFeed(id: string, updates: Partial<RssFeedConfig>): RssFeedConfig | null {
+    const feeds = this.getRssFeeds();
+    const idx = feeds.findIndex((f) => f.id === id);
+    if (idx === -1) return null;
+    feeds[idx] = { ...feeds[idx], ...updates };
+    this.state.rssFeeds = feeds;
+    this.save();
+    return feeds[idx];
+  }
+
+  public removeRssFeed(id: string): void {
+    this.state.rssFeeds = this.getRssFeeds().filter((f) => f.id !== id);
+    this.save();
+  }
+
+  public getExcludedKeywords(): string[] {
+    if (!Array.isArray(this.state.excludedKeywords)) {
+      this.state.excludedKeywords = DEFAULT_EXCLUDED_KEYWORDS;
+    }
+    return this.state.excludedKeywords;
+  }
+
+  public updateExcludedKeywords(keywords: string[]): string[] {
+    this.state.excludedKeywords = keywords
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => k.length > 0);
+    this.save();
+    return this.state.excludedKeywords;
   }
 
   public addWorkflowLog(log: WorkflowExecutionLog): void {
