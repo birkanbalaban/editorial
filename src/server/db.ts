@@ -463,46 +463,20 @@ const DEFAULT_WORKFLOWS: WorkflowExecutionLog[] = [
   },
 ];
 
-const DEFAULT_LEARNING_SIGNALS: EditorialLearningSignal[] = [
-  {
-    id: 'sig-01',
-    postId: 'ed-01',
-    action: 'approved',
-    timestamp: '2026-11-10T16:00:00Z',
-    aestheticTags: ['brutalist architecture', 'monochrome tailoring', 'chiaroscuro fog', 'grain'],
-    photographer: 'Sølve Sundsbø',
-    publication: "Harper's Bazaar UK",
-  },
-  {
-    id: 'sig-02',
-    postId: 'ed-02',
-    action: 'approved',
-    timestamp: '2026-11-11T07:45:00Z',
-    aestheticTags: ['sculptural couture', 'tungsten lighting', 'deardorff camera depth', 'high contrast'],
-    photographer: 'Paolo Roversi',
-    publication: 'Vogue Italia',
-  },
-  {
-    id: 'sig-03',
-    postId: 'ed-03',
-    action: 'saved',
-    timestamp: '2026-11-09T14:20:00Z',
-    aestheticTags: ['tactile drapery', 'organic textures', 'natural daylight'],
-    photographer: 'Harley Weir',
-    publication: 'Dazed & Confused',
-  },
-];
+const DEFAULT_LEARNING_SIGNALS: EditorialLearningSignal[] = [];
 
-const DEFAULT_ENGAGEMENT_POINTS: EditorialEngagementPoint[] = [
-  { date: '11/04', fullDate: '2026-11-04', reach: 14200, likes: 1820, shares: 420, saves: 310, engagementRate: 14.8, postTitle: 'Atmospheric Horizon: Icelandic Volcanic Plain', photographer: 'Juergen Teller' },
-  { date: '11/05', fullDate: '2026-11-05', reach: 18900, likes: 2450, shares: 610, saves: 540, engagementRate: 15.2, postTitle: 'Solarization Study in Monochrome', photographer: 'David Sims' },
-  { date: '11/06', fullDate: '2026-11-06', reach: 22400, likes: 3110, shares: 890, saves: 720, engagementRate: 16.1, postTitle: 'Submerged Nocturne: The Glass Pavilion', photographer: 'Steven Meisel' },
-  { date: '11/07', fullDate: '2026-11-07', reach: 25800, likes: 3780, shares: 1040, saves: 880, engagementRate: 16.4, postTitle: 'Monolithic Proportions & Tailored Restraint', photographer: 'Alasdair McLellan' },
-  { date: '11/08', fullDate: '2026-11-08', reach: 29400, likes: 4220, shares: 1180, saves: 990, engagementRate: 16.8, postTitle: 'Textured Shroud & Raw Sensation', photographer: 'Harley Weir' },
-  { date: '11/09', fullDate: '2026-11-09', reach: 33800, likes: 4890, shares: 1420, saves: 1210, engagementRate: 17.3, postTitle: 'Sculptural Geometry & Chiaroscuro', photographer: 'Paolo Roversi' },
-  { date: '11/10', fullDate: '2026-11-10', reach: 38200, likes: 5640, shares: 1710, saves: 1490, engagementRate: 17.8, postTitle: 'Monolith in Motion: Brutal Romance', photographer: 'Sølve Sundsbø' },
-  { date: '11/11', fullDate: '2026-11-11', reach: 41600, likes: 6180, shares: 1940, saves: 1680, engagementRate: 18.2, postTitle: 'Autonomous Index Midday Broadcast', photographer: 'Paolo Roversi' },
-];
+const DEFAULT_ENGAGEMENT_POINTS: EditorialEngagementPoint[] = [];
+
+const LEGACY_MOCK_ENGAGEMENT_TITLES = new Set([
+  'atmospheric horizon: icelandic volcanic plain',
+  'solarization study in monochrome',
+  'submerged nocturne: the glass pavilion',
+  'monolithic proportions & tailored restraint',
+  'textured shroud & raw sensation',
+  'sculptural geometry & chiaroscuro',
+  'monolith in motion: brutal romance',
+  'autonomous index midday broadcast',
+]);
 
 function normalizeTitleKey(title: string): string {
   return title
@@ -551,13 +525,17 @@ class Database {
 
   constructor() {
     this.state = this.load();
-    if (!this.state.engagementPoints || this.state.engagementPoints.length === 0) {
-      this.state.engagementPoints = DEFAULT_ENGAGEMENT_POINTS;
+    if (!this.state.engagementPoints) {
+      this.state.engagementPoints = [];
+    }
+    if (!this.state.learningSignals) {
+      this.state.learningSignals = [];
     }
     if (!this.state.aiAgentConfig) {
       this.state.aiAgentConfig = DEFAULT_AI_AGENT_CONFIG;
     }
     this.deduplicatePosts();
+    this.purgeLegacyAnalyticsAndSignals();
     this.state.posts = this.state.posts.map((post) => {
       if (post.approvalRecord && !post.approvalRecord.contentHash) {
         post.approvalRecord.contentHash = computeContentHash(post);
@@ -568,6 +546,20 @@ class Database {
       return post;
     });
     this.save();
+  }
+
+  public purgeLegacyAnalyticsAndSignals(): void {
+    this.state.learningSignals = (this.state.learningSignals || []).filter((sig) => {
+      if (sig.id === 'sig-01' || sig.id === 'sig-02' || sig.id === 'sig-03') return false;
+      if (sig.postId && /^ed-0[1-7]$/.test(sig.postId)) return false;
+      return true;
+    });
+
+    this.state.engagementPoints = (this.state.engagementPoints || []).filter((pt) => {
+      const titleLower = (pt.postTitle || '').trim().toLowerCase();
+      if (LEGACY_MOCK_ENGAGEMENT_TITLES.has(titleLower)) return false;
+      return true;
+    });
   }
 
   public deduplicatePosts(): { removedCount: number; remainingCount: number } {
@@ -627,7 +619,10 @@ class Database {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         if (!parsed.engagementPoints) {
-          parsed.engagementPoints = DEFAULT_ENGAGEMENT_POINTS;
+          parsed.engagementPoints = [];
+        }
+        if (!parsed.learningSignals) {
+          parsed.learningSignals = [];
         }
         if (!parsed.aiAgentConfig) {
           parsed.aiAgentConfig = DEFAULT_AI_AGENT_CONFIG;
@@ -748,7 +743,51 @@ class Database {
   }
 
   public addLearningSignal(signal: EditorialLearningSignal): void {
+    this.state.learningSignals = (this.state.learningSignals || []).filter(
+      (s) => !(s.postId === signal.postId && s.action === signal.action)
+    );
     this.state.learningSignals.unshift(signal);
+    this.save();
+  }
+
+  public recordCuratorialSignal(
+    post: EditorialPost,
+    action: 'approved' | 'rejected' | 'saved'
+  ): EditorialLearningSignal {
+    const extractedTags = Array.from(
+      new Set([
+        ...(post.hashtags || []).map((h) => h.replace(/^#/, '').toLowerCase()).filter((h) => h !== 'theeditorialindex'),
+        ...(post.brand ? [post.brand.toLowerCase()] : []),
+        post.publication.toLowerCase(),
+      ])
+    ).slice(0, 6);
+
+    const scoreDelta = action === 'approved' ? 10 : action === 'saved' ? 6 : -12;
+
+    const signal: EditorialLearningSignal = {
+      id: `sig-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      postId: post.id,
+      postTitle: post.title,
+      sourceUrl: post.sourceUrl,
+      action,
+      timestamp: new Date().toISOString(),
+      aestheticTags: extractedTags,
+      photographer: post.photographer,
+      publication: post.publication,
+      scoreDelta,
+    };
+
+    this.addLearningSignal(signal);
+    return signal;
+  }
+
+  public removeLearningSignal(signalId: string): void {
+    this.state.learningSignals = (this.state.learningSignals || []).filter((s) => s.id !== signalId);
+    this.save();
+  }
+
+  public clearLearningSignals(): void {
+    this.state.learningSignals = [];
     this.save();
   }
 
@@ -786,16 +825,32 @@ class Database {
   }
 
   public getEngagementPoints(): EditorialEngagementPoint[] {
-    return this.state.engagementPoints || DEFAULT_ENGAGEMENT_POINTS;
+    return this.state.engagementPoints || [];
+  }
+
+  public upsertEngagementPoint(point: EditorialEngagementPoint): EditorialEngagementPoint {
+    if (!this.state.engagementPoints) {
+      this.state.engagementPoints = [];
+    }
+    const existingIdx = this.state.engagementPoints.findIndex(
+      (p) => (point.postId && p.postId === point.postId) || (point.postTitle && p.postTitle === point.postTitle)
+    );
+    if (existingIdx >= 0) {
+      this.state.engagementPoints[existingIdx] = {
+        ...this.state.engagementPoints[existingIdx],
+        ...point,
+      };
+    } else {
+      this.state.engagementPoints.push(point);
+    }
+    this.save();
+    return point;
   }
 
   public addEngagementPoint(point: EditorialEngagementPoint): void {
-    if (!this.state.engagementPoints) {
-      this.state.engagementPoints = [...DEFAULT_ENGAGEMENT_POINTS];
-    }
-    this.state.engagementPoints.push(point);
-    this.save();
+    this.upsertEngagementPoint(point);
   }
 }
 
 export const db = new Database();
+

@@ -42,18 +42,71 @@ import {
   Compass,
   Check,
   Minus,
-  Activity
+  Activity,
+  RefreshCw,
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
 
 interface EditorialEngagementChartProps {
   data: EditorialEngagementPoint[];
   posts?: EditorialPost[];
+  instagramConnected?: boolean;
+  instagramUsername?: string;
+  onSyncInstagramInsights?: (postId?: string) => Promise<void>;
+  isSyncing?: boolean;
 }
 
 export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> = ({ 
   data, 
-  posts = [] 
+  posts = [],
+  instagramConnected = false,
+  instagramUsername,
+  onSyncInstagramInsights,
+  isSyncing = false,
 }) => {
+  const [syncingPostId, setSyncingPostId] = useState<string | null>(null);
+
+  // Real In-App Curatorial & Publishing Funnel Metrics derived from actual posts
+  const curatorialFunnel = useMemo(() => {
+    const totalShoots = posts.length;
+    const totalCarouselFrames = posts.reduce((acc, p) => acc + (p.imageUrls?.length || 1), 0);
+    const totalGalleryPhotos = posts.reduce(
+      (acc, p) => acc + (p.candidateImages?.length || p.imageUrls?.length || 1),
+      0
+    );
+    const queuedCount = posts.filter((p) => p.status === 'selected').length;
+    const approvedCount = posts.filter(
+      (p) => p.status === 'approved' || p.status === 'scheduled'
+    ).length;
+    const publishedCount = posts.filter((p) => p.status === 'published').length;
+    const avgScore =
+      totalShoots > 0
+        ? Math.round(posts.reduce((acc, p) => acc + p.score.overall, 0) / totalShoots)
+        : 0;
+    const liveGraphCount = data.filter((d) => d.source === 'meta_graph_api').length;
+
+    return {
+      totalShoots,
+      totalCarouselFrames,
+      totalGalleryPhotos,
+      queuedCount,
+      approvedCount,
+      publishedCount,
+      avgScore,
+      liveGraphCount,
+    };
+  }, [posts, data]);
+
+  const handleSyncSingle = async (postId?: string) => {
+    if (!onSyncInstagramInsights) return;
+    setSyncingPostId(postId || 'ALL');
+    try {
+      await onSyncInstagramInsights(postId);
+    } finally {
+      setSyncingPostId(null);
+    }
+  };
   // Top-level View Mode: 'single' (timeline overview) vs 'compare' (side-by-side comparison)
   const [viewMode, setViewMode] = useState<'single' | 'compare'>('single');
 
@@ -333,8 +386,26 @@ export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> =
           </p>
         </div>
 
-        {/* Primary View Mode Switcher */}
+        {/* Primary View Mode Switcher + Live Instagram Sync */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+          {onSyncInstagramInsights && (
+            <button
+              onClick={() => handleSyncSingle(undefined)}
+              disabled={isSyncing || syncingPostId !== null}
+              className="px-3.5 py-2 bg-[#c5a880] hover:bg-[#d4b992] disabled:opacity-50 text-[#0a0a0a] font-mono text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-2"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${
+                  isSyncing || syncingPostId === 'ALL' ? 'animate-spin' : ''
+                }`}
+              />
+              <span>
+                {isSyncing || syncingPostId === 'ALL'
+                  ? 'Syncing Meta Graph API...'
+                  : 'Sync Live Instagram Insights'}
+              </span>
+            </button>
+          )}
           <div className="flex items-center p-1 bg-[#121212] rounded border border-[#222222] font-mono text-xs">
             <button
               onClick={() => setViewMode('single')}
@@ -354,6 +425,68 @@ export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> =
               <ArrowRightLeft className="w-3.5 h-3.5" />
               <span>Side-by-Side Compare</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Live In-App Curatorial & Meta Graph API Telemetry Banner */}
+      <div className="p-5 bg-[#121212] border border-[#222222] rounded space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e1e1e] pb-3">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#c5a880]">
+            <CheckCircle2 className="w-4 h-4 text-[#a3e635]" />
+            <span>Real-Time In-App Curatorial Funnel & Meta Graph API v21.0 Telemetry</span>
+          </div>
+          <div className="text-[11px] font-mono text-[#8e8d8a]">
+            {instagramConnected
+              ? `Connected Account: @${instagramUsername || 'Professional'} · ${curatorialFunnel.liveGraphCount} Live Graph Synced`
+              : `Curatorial Archive Telemetry Active · Connect Instagram Token for Live Graph Media IDs`}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-xs font-mono">
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Verified Shoots</span>
+            <span className="text-xl font-bold text-[#f4f3ef] tabular-nums">
+              {curatorialFunnel.totalShoots}
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">Real RSS/Archive</span>
+          </div>
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Selected Frames</span>
+            <span className="text-xl font-bold text-[#c5a880] tabular-nums">
+              {curatorialFunnel.totalCarouselFrames}
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">
+              of {curatorialFunnel.totalGalleryPhotos} shoot photos
+            </span>
+          </div>
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Approval Queue</span>
+            <span className="text-xl font-bold text-[#f4f3ef] tabular-nums">
+              {curatorialFunnel.queuedCount}
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">Awaiting review</span>
+          </div>
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Post Packages</span>
+            <span className="text-xl font-bold text-[#a3e635] tabular-nums">
+              {curatorialFunnel.approvedCount}
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">Ready for release</span>
+          </div>
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Published Live</span>
+            <span className="text-xl font-bold text-[#f4f3ef] tabular-nums">
+              {curatorialFunnel.publishedCount}
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">Instagram feed</span>
+          </div>
+          <div className="p-3 bg-[#161616] border border-[#242424] rounded">
+            <span className="text-[10px] uppercase text-[#71717a] block">Mean Audit Score</span>
+            <span className="text-xl font-bold text-[#c5a880] tabular-nums">
+              {curatorialFunnel.avgScore}/100
+            </span>
+            <span className="text-[10px] text-[#8e8d8a] block mt-0.5">Agent 2 verified</span>
           </div>
         </div>
       </div>
@@ -811,10 +944,10 @@ export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> =
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xs uppercase tracking-widest text-[#71717a] font-mono">
-                Published Editorial Content Performance Breakdown
+                Real Curated & Published Editorial Performance Breakdown
               </h2>
               <span className="text-xs font-mono text-[#8e8d8a]">
-                {filteredData.length} Indexed Releases
+                {filteredData.length} Verified Works Indexed
               </span>
             </div>
 
@@ -823,24 +956,56 @@ export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> =
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-[#181818] border-b border-[#222222] text-[#8e8d8a] uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="py-3 px-4">Publication Date</th>
+                      <th className="py-3 px-4">Date</th>
                       <th className="py-3 px-4">Curated Monograph Title</th>
-                      <th className="py-3 px-4">Photographer</th>
+                      <th className="py-3 px-4">Photographer · Magazine</th>
+                      <th className="py-3 px-4">Telemetry Source</th>
                       <th className="py-3 px-4 text-right">Reach</th>
                       <th className="py-3 px-4 text-right">Likes</th>
                       <th className="py-3 px-4 text-right">Shares & Saves</th>
                       <th className="py-3 px-4 text-right">Engagement</th>
+                      {onSyncInstagramInsights && <th className="py-3 px-4 text-right">Live Sync</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1e1e1e]">
                     {filteredData.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-[#161616] transition">
+                      <tr key={item.id || idx} className="hover:bg-[#161616] transition">
                         <td className="py-3 px-4 text-[#8e8d8a] whitespace-nowrap">{item.fullDate}</td>
-                        <td className="py-3 px-4 text-[#f4f3ef] font-sans font-medium whitespace-nowrap">
-                          {item.postTitle || 'Editorial Monograph'}
+                        <td className="py-3 px-4 text-[#f4f3ef] font-sans font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="line-clamp-1">{item.postTitle || 'Editorial Monograph'}</span>
+                            {item.permalink && (
+                              <a
+                                href={item.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#c5a880] hover:underline inline-flex items-center gap-0.5 text-[10px] font-mono shrink-0"
+                                title="Open verified article or Instagram permalink"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
                         </td>
-                        <td className="py-3 px-4 text-[#c5a880] whitespace-nowrap">
-                          {item.photographer || 'Curated Artist'}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span className="text-[#c5a880]">{item.photographer || 'Curated Artist'}</span>
+                          {item.publication && (
+                            <>
+                              <span className="text-[#71717a] mx-1">·</span>
+                              <span className="text-[#8e8d8a]">{item.publication}</span>
+                            </>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] uppercase ${
+                              item.source === 'meta_graph_api'
+                                ? 'bg-[#182618] text-[#a3e635] border border-[#224022]'
+                                : 'bg-[#1e1e1e] text-[#c5a880] border border-[#2e2e2e]'
+                            }`}
+                          >
+                            {item.source === 'meta_graph_api' ? 'Meta Graph API' : 'Curatorial Index'}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right text-[#f4f3ef] font-semibold tabular-nums">
                           {item.reach.toLocaleString()}
@@ -854,6 +1019,23 @@ export const EditorialEngagementChart: React.FC<EditorialEngagementChartProps> =
                         <td className="py-3 px-4 text-right text-[#a3e635] font-semibold tabular-nums">
                           {item.engagementRate}%
                         </td>
+                        {onSyncInstagramInsights && (
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => handleSyncSingle(item.postId)}
+                              disabled={isSyncing || syncingPostId !== null || !item.postId}
+                              className="px-2.5 py-1 bg-[#1a1a1a] hover:bg-[#242424] border border-[#333333] hover:border-[#c5a880] text-[#f4f3ef] rounded text-[10px] font-mono uppercase tracking-wider inline-flex items-center gap-1.5 cursor-pointer transition disabled:opacity-40"
+                              title="Fetch live Likes, Saves, Shares, and Reach from Meta Graph API"
+                            >
+                              <RefreshCw
+                                className={`w-3 h-3 text-[#c5a880] ${
+                                  syncingPostId === item.postId ? 'animate-spin' : ''
+                                }`}
+                              />
+                              <span>Sync</span>
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

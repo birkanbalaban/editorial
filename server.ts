@@ -14,9 +14,9 @@ import {
 } from './src/server/realDiscoveryService';
 import { InstagramAdapter } from './src/server/instagramAdapter';
 import { canActivateAutopilot, canPublish, computeContentHash } from './src/lib/publishingRules';
-import { selectDailyTop5 } from './src/lib/scoring';
+import { calculatePostLearningDelta, computeLearningProfile, rankCandidates, selectDailyTop5 } from './src/lib/scoring';
 import { calculateAggregateMetrics } from './src/lib/analytics';
-import { EditorialPost } from './src/types/editorial';
+import { EditorialEngagementPoint, EditorialPost } from './src/types/editorial';
 
 async function startServer() {
   const app = express();
@@ -117,14 +117,19 @@ async function startServer() {
   });
 
   // 4. Daily Selections
+  // 4. Daily Selections (dynamically ranked with Active Learning Signals)
   app.get('/api/selections/daily', (req, res) => {
-    const posts = db.getPosts();
-    const top5 = posts.filter(p => p.isDailyTop5);
-    const candidates = posts.filter(p => !p.isDailyTop5);
+    const signals = db.getState().learningSignals || [];
+    const rankedAll = rankCandidates(db.getPosts(), signals);
+    const activePool = rankedAll.filter((p) => p.status !== 'rejected');
+    const top5Ids = new Set(activePool.slice(0, 5).map((p) => p.id));
+    const top5 = rankedAll.filter((p) => top5Ids.has(p.id));
+    const candidates = rankedAll.filter((p) => !top5Ids.has(p.id));
     res.json({
       top5,
       candidates,
-      all: posts,
+      all: rankedAll,
+      learningProfile: computeLearningProfile(signals),
     });
   });
 
@@ -151,6 +156,7 @@ async function startServer() {
           status: 'selected',
           imageUrls: selectedFrames,
         });
+        db.recordCuratorialSignal(updated || post, 'approved');
         return res.json({ success: true, post: updated });
       }
 
@@ -173,17 +179,7 @@ async function startServer() {
           scheduledTime: payload?.scheduledTime || post.scheduledTime,
         });
 
-        // Record learning signal
-        db.addLearningSignal({
-          id: `sig-${Date.now()}`,
-          postId: post.id,
-          action: 'approved',
-          timestamp: new Date().toISOString(),
-          aestheticTags: [post.creativeDirection, post.brand || 'High Fashion'].filter(Boolean),
-          photographer: post.photographer,
-          publication: post.publication,
-        });
-
+        db.recordCuratorialSignal(updated || post, 'approved');
         return res.json({ success: true, post: updated });
       }
 
@@ -193,16 +189,7 @@ async function startServer() {
           publishingReadiness: 'rejected',
         });
 
-        db.addLearningSignal({
-          id: `sig-${Date.now()}`,
-          postId: post.id,
-          action: 'rejected',
-          timestamp: new Date().toISOString(),
-          aestheticTags: [post.creativeDirection].filter(Boolean),
-          photographer: post.photographer,
-          publication: post.publication,
-        });
-
+        db.recordCuratorialSignal(updated || post, 'rejected');
         return res.json({ success: true, post: updated });
       }
 
@@ -210,15 +197,8 @@ async function startServer() {
         const updated = db.updatePost(postId, {
           status: 'saved',
         });
-        db.addLearningSignal({
-          id: `sig-${Date.now()}`,
-          postId: post.id,
-          action: 'saved',
-          timestamp: new Date().toISOString(),
-          aestheticTags: [post.creativeDirection].filter(Boolean),
-          photographer: post.photographer,
-          publication: post.publication,
-        });
+
+        db.recordCuratorialSignal(updated || post, 'saved');
         return res.json({ success: true, post: updated });
       }
 
@@ -398,9 +378,33 @@ async function startServer() {
 
         if (result.success) {
           db.recordPublish(post.id, result.metaMediaId, result.permalink);
+          const publishedPost = db.getPostById(postId) || post;
+          const insights = await adapter.fetchMediaInsights(publishedPost, igConfig.accessToken);
+          const nowIso = new Date().toISOString().split('T')[0];
+          const mmDd = nowIso.slice(5).replace('-', '/');
+          db.upsertEngagementPoint({
+            id: `eng-${post.id}`,
+            postId: post.id,
+            metaMediaId: result.metaMediaId,
+            permalink: result.permalink || insights.permalink,
+            date: mmDd,
+            fullDate: nowIso,
+            reach: insights.reach,
+            likes: insights.likes,
+            shares: insights.shares,
+            saves: insights.saves,
+            comments: insights.comments,
+            engagementRate: insights.engagementRate,
+            postTitle: publishedPost.title,
+            photographer: publishedPost.photographer,
+            publication: publishedPost.publication,
+            source: insights.liveGraphConnected ? 'meta_graph_api' : 'curatorial_index',
+            syncedAt: new Date().toISOString(),
+          });
+
           return res.json({
             success: true,
-            post: db.getPostById(postId),
+            post: publishedPost,
             metaMediaId: result.metaMediaId,
             permalink: result.permalink,
           });
@@ -437,13 +441,19 @@ async function startServer() {
             contentHash: computeContentHash(p),
           },
         });
-        if (updated) updatedPosts.push(updated);
+        if (updated) {
+          db.recordCuratorialSignal(updated, 'approved');
+          updatedPosts.push(updated);
+        }
       } else if (action === 'reject') {
         const updated = db.updatePost(id, {
           status: 'rejected',
           publishingReadiness: 'rejected',
         });
-        if (updated) updatedPosts.push(updated);
+        if (updated) {
+          db.recordCuratorialSignal(updated, 'rejected');
+          updatedPosts.push(updated);
+        }
       }
     }
 
@@ -475,7 +485,7 @@ async function startServer() {
         username: 'theeditorialindex',
         accountId: 'ig_biz_9029141',
         tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-        permissions: ['instagram_basic', 'instagram_content_publish', 'pages_show_list'],
+        permissions: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_insights', 'pages_show_list'],
       });
       return res.json({ success: true, instagram: updated });
     }
@@ -490,6 +500,7 @@ async function startServer() {
       accountType: verification.accountType,
       username: verification.username,
       accountId: accountId,
+      accessToken: accessToken,
       tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       permissions: verification.permissions,
     });
@@ -644,6 +655,7 @@ async function startServer() {
         count: count || aiConfig.defaultBatchSize,
         aiConfig,
         existingPosts: db.getPosts(),
+        learningSignals: db.getState().learningSignals,
       });
 
       const addedPosts: EditorialPost[] = [];
@@ -690,6 +702,7 @@ async function startServer() {
     const { autoApprove } = req.body || {};
     const aiConfig = db.getAiAgentConfig();
     const shouldAutoApprove = typeof autoApprove === 'boolean' ? autoApprove : aiConfig.autoApproveEnabled;
+    const signals = db.getState().learningSignals || [];
 
     const candidates = db.getPosts().filter(
       p => p.status === 'selected' || p.status === 'candidate' || p.status === 'approved'
@@ -699,12 +712,19 @@ async function startServer() {
     let autoApprovedCount = 0;
 
     for (const post of candidates) {
-      const report = await auditEditorialCandidateWithGemini(post, {
-        ...aiConfig,
-        autoApproveEnabled: shouldAutoApprove,
-      });
+      const learningAdj = calculatePostLearningDelta(post, signals);
+      const effectiveScore = Math.max(55, Math.min(99, post.score.overall + learningAdj.delta));
 
-      const meetsScore = post.score.overall >= aiConfig.minApprovalScore;
+      const report = await auditEditorialCandidateWithGemini(
+        post,
+        {
+          ...aiConfig,
+          autoApproveEnabled: shouldAutoApprove,
+        },
+        signals
+      );
+
+      const meetsScore = effectiveScore >= aiConfig.minApprovalScore;
       const promoteToApproved = shouldAutoApprove && meetsScore && post.status !== 'scheduled' && post.status !== 'published';
 
       if (promoteToApproved) {
@@ -736,7 +756,7 @@ async function startServer() {
       stage: '09:00 Evaluation',
       timestamp: new Date().toISOString(),
       status: 'success',
-      summary: `Agent 2 audited ${auditedPosts.length} candidates (Threshold: ${aiConfig.minApprovalScore}/100). Auto-approved: ${autoApprovedCount}.`,
+      summary: `Agent 2 audited ${auditedPosts.length} candidates with Active Learning weights (Threshold: ${aiConfig.minApprovalScore}/100). Auto-approved: ${autoApprovedCount}.`,
       itemsProcessed: auditedPosts.length,
     });
 
@@ -748,16 +768,138 @@ async function startServer() {
     });
   });
 
-  // 10. Learning Signals
+  // 10. Learning Signals (Active Learning Feedback Loop)
   app.get('/api/learning/signals', (req, res) => {
-    res.json({ signals: db.getState().learningSignals });
+    const signals = db.getState().learningSignals || [];
+    res.json({
+      signals,
+      profile: computeLearningProfile(signals),
+    });
   });
 
-  // 11. Engagement Analytics over Time
-  app.get('/api/analytics/engagement', (req, res) => {
+  app.delete('/api/learning/signals/:id', (req, res) => {
+    db.removeLearningSignal(req.params.id);
+    const signals = db.getState().learningSignals || [];
+    res.json({
+      success: true,
+      signals,
+      profile: computeLearningProfile(signals),
+    });
+  });
+
+  app.post('/api/learning/signals/clear', (req, res) => {
+    db.clearLearningSignals();
+    res.json({
+      success: true,
+      signals: [],
+      profile: computeLearningProfile([]),
+    });
+  });
+
+  // 11. Engagement Analytics & Live Meta Graph API Insights Sync
+  const buildLiveEngagementPoints = async (): Promise<EditorialEngagementPoint[]> => {
+    let points = db.getEngagementPoints();
+    const posts = db.getPosts();
+
+    // If no engagement points recorded yet, initialize from real curated magazine shoots in the index
+    if (points.length === 0 && posts.length > 0) {
+      const adapter = new InstagramAdapter(db.getInstagram());
+      const ordered = [...posts].reverse();
+      for (let i = 0; i < ordered.length; i++) {
+        const p = ordered[i];
+        const insights = await adapter.fetchMediaInsights(p, db.getInstagram().accessToken);
+        const d = new Date(Date.now() - (ordered.length - 1 - i) * 86400000);
+        const fullDate = d.toISOString().split('T')[0];
+        const mmDd = fullDate.slice(5).replace('-', '/');
+        db.upsertEngagementPoint({
+          id: `eng-${p.id}`,
+          postId: p.id,
+          metaMediaId: p.approvalRecord?.instagramPostId || insights.metaMediaId,
+          permalink: p.sourceUrl,
+          date: mmDd,
+          fullDate,
+          reach: insights.reach,
+          likes: insights.likes,
+          shares: insights.shares,
+          saves: insights.saves,
+          comments: insights.comments,
+          engagementRate: insights.engagementRate,
+          postTitle: p.title,
+          photographer: p.photographer,
+          publication: p.publication,
+          source: insights.liveGraphConnected ? 'meta_graph_api' : 'curatorial_index',
+          syncedAt: new Date().toISOString(),
+        });
+      }
+      points = db.getEngagementPoints();
+    }
+    return points;
+  };
+
+  app.get('/api/analytics/engagement', async (req, res) => {
+    const points = await buildLiveEngagementPoints();
+    const aggregate = calculateAggregateMetrics(points);
+    res.json({
+      points,
+      aggregate,
+      instagramConnected: db.getInstagram().connected,
+    });
+  });
+
+  app.post('/api/analytics/sync-instagram', async (req, res) => {
+    const { postId } = req.body || {};
+    const igConfig = db.getInstagram();
+    const adapter = new InstagramAdapter(igConfig);
+    const allPosts = db.getPosts();
+
+    const targets = postId
+      ? allPosts.filter((p) => p.id === postId)
+      : allPosts.filter((p) => p.status === 'published' || p.status === 'approved' || p.status === 'scheduled' || p.status === 'selected');
+
+    const toSync = targets.length > 0 ? targets : allPosts;
+    let syncedCount = 0;
+    let liveGraphUsed = false;
+
+    for (let i = 0; i < toSync.length; i++) {
+      const p = toSync[i];
+      const insights = await adapter.fetchMediaInsights(p, igConfig.accessToken);
+      if (insights.liveGraphConnected) liveGraphUsed = true;
+
+      const existing = db.getEngagementPoints().find((pt) => pt.postId === p.id);
+      const fullDate = existing?.fullDate || p.publicationDate || new Date().toISOString().split('T')[0];
+      const mmDd = existing?.date || fullDate.slice(5).replace('-', '/');
+
+      db.upsertEngagementPoint({
+        id: `eng-${p.id}`,
+        postId: p.id,
+        metaMediaId: p.approvalRecord?.instagramPostId || insights.metaMediaId,
+        permalink: insights.permalink || p.sourceUrl,
+        date: mmDd,
+        fullDate,
+        reach: insights.reach,
+        likes: insights.likes,
+        shares: insights.shares,
+        saves: insights.saves,
+        comments: insights.comments,
+        engagementRate: insights.engagementRate,
+        postTitle: p.title,
+        photographer: p.photographer,
+        publication: p.publication,
+        source: insights.liveGraphConnected ? 'meta_graph_api' : 'curatorial_index',
+        syncedAt: new Date().toISOString(),
+      });
+      syncedCount += 1;
+    }
+
     const points = db.getEngagementPoints();
     const aggregate = calculateAggregateMetrics(points);
-    res.json({ points, aggregate });
+    res.json({
+      success: true,
+      syncedCount,
+      liveGraphUsed,
+      points,
+      aggregate,
+    });
   });
 
   // Automatically populate with real live magazine articles if empty (after purging fake legacy posts)

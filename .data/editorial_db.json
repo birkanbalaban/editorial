@@ -1,377 +1,427 @@
 {
   "posts": [
     {
-      "id": "ed-01",
-      "title": "Monolith in Motion: Brutal Romance",
-      "photographer": "Sølve Sundsbø",
-      "photographerHandle": "@solvesundsbostudio",
-      "stylist": "Edward Enninful",
-      "model": "Mica Argañaraz",
-      "publication": "Harper's Bazaar UK",
-      "brand": "Saint Laurent by Anthony Vaccarello",
-      "publicationDate": "2026-11-10",
-      "sourceUrl": "https://archive.harpersbazaar.com/2026/brutal-romance",
+      "id": "ed-live-1794516712702-5",
+      "title": "Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme",
+      "photographer": "Nathaniel Goldberg",
+      "photographerHandle": "@nathanielgoldberg",
+      "stylist": "Numéro Magazine Fashion Direction",
+      "publication": "Numéro Magazine",
+      "brand": "High-Fashion Editorial Series",
+      "publicationDate": "2026-11-06",
+      "sourceUrl": "https://numero.com/en/fashion/men-fashion/numero-homme-culture-physique-a-fashion-story-by-nathaniel-goldberg-2/",
       "imageUrls": [
-        "/src/assets/images/editorial_monochrome_trench_1794402216302.jpg"
+        "https://numero.com/wp-content/uploads/2024/06/01-s09_numero_homme_thomas_059-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/02-s10_numero_homme_marques_dominic_446-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/05-s07_numero_homme_chris_540-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg"
+      ],
+      "candidateImages": [
+        "https://numero.com/wp-content/uploads/2024/06/01-s09_numero_homme_thomas_059-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/02-s10_numero_homme_marques_dominic_446-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/05-s07_numero_homme_chris_540-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/08-s03_numero_homme_marques_dominic_627-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/11-s04_numero_homme_thomas_496-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-1-scaled.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/s04_numero_homme_thomas_496-def-cmyk-nathaniel-goldberg-david-bradshaw-numero-magazine-push-1.jpg"
+      ],
+      "aspectRatio": "3:4",
+      "score": {
+        "overall": 94,
+        "composition": 93,
+        "lighting": 92,
+        "styling": 97,
+        "culturalRelevance": 98,
+        "narrative": 92,
+        "rationale": "Authentic fashion editorial shoot curated from Numéro Magazine (\"Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme\") featuring 6 coherent photographs from the original photographic series."
+      },
+      "creativeDirection": "Direction assistant: Meltem Ulker. Models: Thomas Sefcik at MC2 Model Management and Chris Diaz-Silveira at [...]\nRead More... from Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme\nL’article Physical Culture: Nathaniel Goldberg's exclusive fashion ",
+      "rightsStatus": "verified",
+      "rightsVerificationRecord": {
+        "sourceLicense": "Live Editorial Source · Numéro Magazine",
+        "verifiedAt": "2026-11-12T20:51:52.702Z",
+        "authorizedForSocialMedia": true,
+        "usageNotes": "Verified live publication link (https://numero.com/en/fashion/men-fashion/numero-homme-culture-physique-a-fashion-story-by-nathaniel-goldberg-2/). Full attribution to Numéro Magazine & Nathaniel Goldberg."
+      },
+      "publishingReadiness": "ready",
+      "caption": "Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme\n\nDirection assistant: Meltem Ulker. Models: Thomas Sefcik at MC2 Model Management and Chris Diaz-Silveira at [...]\nRead More... from Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme\nL’article Physical Culture: Nathaniel Goldberg's exclusive fashion \n\nPhotography / Direction: Nathaniel Goldberg\nPublication: Numéro Magazine (@numeromagazine)\nOriginal Editorial: https://numero.com/en/fashion/men-fashion/numero-homme-culture-physique-a-fashion-story-by-nathaniel-goldberg-2/",
+      "hashtags": [
+        "#theeditorialindex",
+        "#numromagazine",
+        "#fashioneditorial",
+        "#fashionphotography",
+        "#editorialshoot"
+      ],
+      "altText": "Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme — Numéro Magazine",
+      "credits": {
+        "photographer": "Nathaniel Goldberg",
+        "stylist": "Numéro Magazine Fashion Team",
+        "publication": "Numéro Magazine",
+        "brand": "High-Fashion Editorial Series"
+      },
+      "isDailyTop5": false,
+      "isCandidate": true,
+      "status": "candidate",
+      "discoveryTopic": "Numéro Magazine",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (94/100 ≥ threshold 89). Exemplary direction assistant: meltem ulker. models: thomas sefcik at mc2 m... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:52.818Z",
+        "confidenceScore": 93
+      }
+    },
+    {
+      "id": "ed-live-1794516712497-4",
+      "title": "Shores: A coastal fashion series by Amanda Charchian",
+      "photographer": "Amanda Charchian",
+      "photographerHandle": "@amandacharchian",
+      "stylist": "Numéro Magazine Fashion Direction",
+      "publication": "Numéro Magazine",
+      "brand": "Photographic Fashion Story",
+      "publicationDate": "2026-10-21",
+      "sourceUrl": "https://numero.com/en/fashion/rivages-the-fashion-story-by-amanda-charchian-2/",
+      "imageUrls": [
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-rivages-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-1-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-7-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-2-1.jpg"
+      ],
+      "candidateImages": [
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-rivages-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-1-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-7-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-2-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-11-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-13-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/push-cover-rivages-amanda-charchian-joe-salloway-anyelina-rosa-angok-mayen-numero-magazine-1.jpg"
+      ],
+      "aspectRatio": "3:4",
+      "score": {
+        "overall": 96,
+        "composition": 97,
+        "lighting": 95,
+        "styling": 95,
+        "culturalRelevance": 94,
+        "narrative": 96,
+        "rationale": "Authentic fashion editorial shoot curated from Numéro Magazine (\"Shores: A coastal fashion series by Amanda Charchian\") featuring 6 coherent photographs from the original photographic series."
+      },
+      "creativeDirection": "Models: Anyelina Rosa from Elite Paris. Angok Mayen from Heroes Model Management. Hair: Shinya Nakagawa [...]\nRead More... from Shores: A coastal fashion series by Amanda Charchian\nL’article Shores: A coastal fashion series by Amanda Charchian est apparu en premier sur Numéro.",
+      "rightsStatus": "verified",
+      "rightsVerificationRecord": {
+        "sourceLicense": "Live Editorial Source · Numéro Magazine",
+        "verifiedAt": "2026-11-12T20:51:52.497Z",
+        "authorizedForSocialMedia": true,
+        "usageNotes": "Verified live publication link (https://numero.com/en/fashion/rivages-the-fashion-story-by-amanda-charchian-2/). Full attribution to Numéro Magazine & Amanda Charchian."
+      },
+      "publishingReadiness": "ready",
+      "caption": "Shores: A coastal fashion series by Amanda Charchian\n\nModels: Anyelina Rosa from Elite Paris. Angok Mayen from Heroes Model Management. Hair: Shinya Nakagawa [...]\nRead More... from Shores: A coastal fashion series by Amanda Charchian\nL’article Shores: A coastal fashion series by Amanda Charchian est apparu en premier sur Numéro.\n\nPhotography / Direction: Amanda Charchian\nPublication: Numéro Magazine (@numeromagazine)\nOriginal Editorial: https://numero.com/en/fashion/rivages-the-fashion-story-by-amanda-charchian-2/",
+      "hashtags": [
+        "#theeditorialindex",
+        "#numromagazine",
+        "#fashioneditorial",
+        "#fashionphotography",
+        "#editorialshoot"
+      ],
+      "altText": "Shores: A coastal fashion series by Amanda Charchian — Numéro Magazine",
+      "credits": {
+        "photographer": "Amanda Charchian",
+        "stylist": "Numéro Magazine Fashion Team",
+        "publication": "Numéro Magazine",
+        "brand": "Photographic Fashion Story"
+      },
+      "isDailyTop5": true,
+      "isCandidate": true,
+      "status": "candidate",
+      "discoveryTopic": "Numéro Magazine",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (96/100 ≥ threshold 89). Exemplary models: anyelina rosa from elite paris. angok mayen from heroes m... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:52.635Z",
+        "confidenceScore": 93
+      }
+    },
+    {
+      "id": "ed-live-1794516712314-3",
+      "title": "25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967",
+      "photographer": "Richard Avedon",
+      "photographerHandle": "@richardavedon",
+      "stylist": "Vogue Fashion Direction",
+      "publication": "Vogue",
+      "brand": "Archival & Runway Monograph",
+      "publicationDate": "2026-11-10",
+      "sourceUrl": "https://www.vogue.com/article/25-pages-of-veruschka-photographed-by-avedon-for-vogue-in-1967",
+      "imageUrls": [
+        "https://assets.vogue.com/photos/6af1ef35d7955c225f29d8a5/master/w_1600,c_limit/011R%20Vogue_19670301_0149_005_0154_r.jpg",
+        "https://assets.vogue.com/photos/6af35d01a7b522c9e8a302e7/master/w_1600,c_limit/001.jpg",
+        "https://assets.vogue.com/photos/6af35d0000eee9e079147156/master/w_1600,c_limit/002.jpg"
+      ],
+      "candidateImages": [
+        "https://assets.vogue.com/photos/6af1ef35d7955c225f29d8a5/master/w_1600,c_limit/011R%20Vogue_19670301_0149_005_0154_r.jpg",
+        "https://assets.vogue.com/photos/6af35d01a7b522c9e8a302e7/master/w_1600,c_limit/001.jpg",
+        "https://assets.vogue.com/photos/6af35d0000eee9e079147156/master/w_1600,c_limit/002.jpg",
+        "https://assets.vogue.com/photos/6af35d01a7b522c9e8a302f4/master/w_1600,c_limit/003.jpg",
+        "https://assets.vogue.com/photos/6af35d00478bc9ccb444f373/master/w_1600,c_limit/004.jpg",
+        "https://assets.vogue.com/photos/6af35d0077d039d863091fcb/master/w_1600,c_limit/005.jpg",
+        "https://assets.vogue.com/photos/6af35d0096f917d3779e6825/master/w_1600,c_limit/006.jpg",
+        "https://assets.vogue.com/photos/6af35d008406f1ebc50d67ed/master/w_1600,c_limit/007.jpg",
+        "https://assets.vogue.com/photos/6af35d00c31ae0e9e0b86a97/master/w_1600,c_limit/008.jpg",
+        "https://assets.vogue.com/photos/6af35d01a7b522c9e8a302ee/master/w_1600,c_limit/009.jpg",
+        "https://assets.vogue.com/photos/6af35d00bb47b8d2100ea960/master/w_1600,c_limit/010.jpg",
+        "https://assets.vogue.com/photos/6af35d01c949b7a80160da6a/master/w_1600,c_limit/011.jpg"
+      ],
+      "aspectRatio": "3:4",
+      "score": {
+        "overall": 95,
+        "composition": 94,
+        "lighting": 98,
+        "styling": 93,
+        "culturalRelevance": 97,
+        "narrative": 93,
+        "rationale": "Authentic fashion editorial shoot curated from Vogue (\"25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967\") featuring 12 coherent photographs from the original photographic series."
+      },
+      "creativeDirection": "Ahead of the Ron Howard–directed Richard Avedon documentary, we share a 1967 an editorial from the archive that’s worth jumping up and down about.",
+      "rightsStatus": "verified",
+      "rightsVerificationRecord": {
+        "sourceLicense": "Live Editorial Source · Vogue",
+        "verifiedAt": "2026-11-12T20:51:52.314Z",
+        "authorizedForSocialMedia": true,
+        "usageNotes": "Verified live publication link (https://www.vogue.com/article/25-pages-of-veruschka-photographed-by-avedon-for-vogue-in-1967). Full attribution to Vogue & Richard Avedon."
+      },
+      "publishingReadiness": "ready",
+      "caption": "25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967\n\nAhead of the Ron Howard–directed Richard Avedon documentary, we share a 1967 an editorial from the archive that’s worth jumping up and down about.\n\nPhotography / Direction: Richard Avedon\nPublication: Vogue (@voguemagazine)\nOriginal Editorial: https://www.vogue.com/article/25-pages-of-veruschka-photographed-by-avedon-for-vogue-in-1967",
+      "hashtags": [
+        "#theeditorialindex",
+        "#vogue",
+        "#fashioneditorial",
+        "#fashionphotography",
+        "#editorialshoot"
+      ],
+      "altText": "25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967 — Vogue",
+      "credits": {
+        "photographer": "Richard Avedon",
+        "stylist": "Vogue Fashion Team",
+        "publication": "Vogue",
+        "brand": "Archival & Runway Monograph"
+      },
+      "isDailyTop5": true,
+      "isCandidate": true,
+      "status": "candidate",
+      "discoveryTopic": "Vogue",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (95/100 ≥ threshold 89). Exemplary ahead of the ron howard–directed richard avedon documentary, we s... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:52.449Z",
+        "confidenceScore": 93
+      }
+    },
+    {
+      "id": "ed-live-1794516712076-2",
+      "title": "Power girl: An empowering fashion series by Billy Kidd",
+      "photographer": "Billy Kidd",
+      "photographerHandle": "@billykidd",
+      "stylist": "Numéro Magazine Fashion Direction",
+      "publication": "Numéro Magazine",
+      "brand": "High-Fashion Editorial Series",
+      "publicationDate": "2026-11-10",
+      "sourceUrl": "https://numero.com/en/fashion/power-girl-the-fashion-story-by-billy-kidd-2/",
+      "imageUrls": [
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine1-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine2-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine7-1.jpg"
+      ],
+      "candidateImages": [
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine1-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine2-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-power-girl-billy-kidd-numero-magazine7-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/push-cover-serie-mode-billy-kidd-power-girl-numero-magazine-1.jpg"
       ],
       "aspectRatio": "3:4",
       "score": {
         "overall": 96,
         "composition": 98,
-        "lighting": 95,
+        "lighting": 93,
         "styling": 97,
-        "culturalRelevance": 94,
-        "narrative": 96,
-        "rationale": "Masterful architectural framing within London brutalist estate. Chiaroscuro morning fog highlights tailored leather silhouette."
+        "culturalRelevance": 93,
+        "narrative": 97,
+        "rationale": "Authentic fashion editorial shoot curated from Numéro Magazine (\"Power girl: An empowering fashion series by Billy Kidd\") featuring 4 coherent photographs from the original photographic series."
       },
-      "creativeDirection": "Brutalist European architecture in natural morning mist. Heavy grain, stark geometric balance.",
+      "creativeDirection": "[...]\nRead More... from Power girl: An empowering fashion series by Billy Kidd\nL’article Power girl: An empowering fashion series by Billy Kidd est apparu en premier sur Numéro.",
       "rightsStatus": "verified",
       "rightsVerificationRecord": {
-        "sourceLicense": "Syndication Direct / Condé Nast & Hearst Archival",
-        "verifiedAt": "2026-11-10T14:30:00Z",
+        "sourceLicense": "Live Editorial Source · Numéro Magazine",
+        "verifiedAt": "2026-11-12T20:51:52.076Z",
         "authorizedForSocialMedia": true,
-        "usageNotes": "Global digital archival publishing permitted with explicit photographer & publication attribution.",
-        "contractRef": "CN-SYND-2026-8841"
+        "usageNotes": "Verified live publication link (https://numero.com/en/fashion/power-girl-the-fashion-story-by-billy-kidd-2/). Full attribution to Numéro Magazine & Billy Kidd."
       },
-      "publishingReadiness": "published",
-      "caption": "Structured monoliths in London morning mist. Sølve Sundsbø frames Mica Argañaraz in Saint Laurent tailored leather, contrasting brutalist concrete with fluid restraint.\n\nPhotographer: @solvesundsbostudio\nStyling: @edward_enninful\nPublication: @bazaaruk\nArchival Index: 2026.XI.10",
+      "publishingReadiness": "ready",
+      "caption": "Power girl: An empowering fashion series by Billy Kidd\n\n[...]\nRead More... from Power girl: An empowering fashion series by Billy Kidd\nL’article Power girl: An empowering fashion series by Billy Kidd est apparu en premier sur Numéro.\n\nPhotography / Direction: Billy Kidd\nPublication: Numéro Magazine (@numeromagazine)\nOriginal Editorial: https://numero.com/en/fashion/power-girl-the-fashion-story-by-billy-kidd-2/",
       "hashtags": [
         "#theeditorialindex",
-        "#solvesundsbo",
-        "#harpersbazaar",
-        "#saintlaurent",
+        "#numromagazine",
+        "#fashioneditorial",
         "#fashionphotography",
-        "#editorialmonograph"
+        "#editorialshoot"
       ],
-      "altText": "Full-length fashion editorial of model in black leather trench standing on concrete balcony against misty brutalist towers.",
+      "altText": "Power girl: An empowering fashion series by Billy Kidd — Numéro Magazine",
       "credits": {
-        "photographer": "Sølve Sundsbø",
-        "stylist": "Edward Enninful",
-        "model": "Mica Argañaraz",
-        "publication": "Harper's Bazaar UK",
-        "brand": "Saint Laurent"
+        "photographer": "Billy Kidd",
+        "stylist": "Numéro Magazine Fashion Team",
+        "publication": "Numéro Magazine",
+        "brand": "High-Fashion Editorial Series"
       },
       "isDailyTop5": true,
       "isCandidate": true,
-      "status": "published",
-      "scheduledTime": "14:00",
-      "approvalRecord": {
-        "approvedBy": "Editorial Director",
-        "approvedAt": "2026-11-11T13:17:06.388Z",
-        "version": 1,
-        "scheduledFor": "14:00",
-        "contentHash": "v1249859206",
-        "publishedAt": "2026-11-11T13:17:14.458Z",
-        "instagramPostId": "meta_1794403034458"
+      "status": "selected",
+      "discoveryTopic": "Numéro Magazine",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (96/100 ≥ threshold 89). Exemplary [...]\nread more... from power girl: an empowering fashion series ... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:52.210Z",
+        "confidenceScore": 93
       }
     },
     {
-      "id": "ed-02",
-      "title": "Sculptural Geometry & Chiaroscuro",
-      "photographer": "Paolo Roversi",
-      "photographerHandle": "@paoloroversi",
-      "stylist": "Grace Coddington",
-      "model": "Mariacarla Boscono",
-      "publication": "Vogue Italia",
-      "brand": "Balenciaga Haute Couture",
-      "publicationDate": "2026-11-09",
-      "sourceUrl": "https://vogue.it/moda/article/sculptural-geometry-roversi",
+      "id": "ed-live-1794516711882-1",
+      "title": "White Paradise: A snowy fashion series by Laurie Bartley",
+      "photographer": "Laurie Bartley",
+      "photographerHandle": "@lauriebartley",
+      "stylist": "Numéro Magazine Fashion Direction",
+      "publication": "Numéro Magazine",
+      "brand": "Photographic Fashion Story",
+      "publicationDate": "2026-10-22",
+      "sourceUrl": "https://numero.com/en/fashion/paradis-blanc-the-fashion-story-by-laurie-bartley-2/",
       "imageUrls": [
-        "/src/assets/images/editorial_sculptural_couture_1794402215178.jpg"
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-4-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-5-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-8-1.jpg"
+      ],
+      "candidateImages": [
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-4-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-5-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-8-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-9-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-10-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-11-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/erie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-12-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/push-cover-serie-mode-paradis-blanc-laurie-bartley-samuel-francois-kateryna-zub-numero-198-numero-magazine-1.jpg"
       ],
       "aspectRatio": "3:4",
       "score": {
         "overall": 95,
-        "composition": 96,
-        "lighting": 97,
-        "styling": 94,
-        "culturalRelevance": 93,
-        "narrative": 95,
-        "rationale": "Signature 8x10 Deardorff camera depth with slow directional tungsten glow. Exaggerated midnight wool silhouette elevates haute couture sculpturing."
+        "composition": 95,
+        "lighting": 96,
+        "styling": 95,
+        "culturalRelevance": 96,
+        "narrative": 94,
+        "rationale": "Authentic fashion editorial shoot curated from Numéro Magazine (\"White Paradise: A snowy fashion series by Laurie Bartley\") featuring 8 coherent photographs from the original photographic series."
       },
-      "creativeDirection": "Slow-shutter painterly chiaroscuro, raw industrial concrete floor, exaggerated dark architectural drapery.",
+      "creativeDirection": "Model : Kateryna Zub at IMG Models. Hair: Gareth Bromell at Premier Hair and Make-up. [...]\nRead More... from White Paradise: A snowy fashion series by Laurie Bartley\nL’article White Paradise: A snowy fashion series by Laurie Bartley est apparu en premier sur Numéro.",
       "rightsStatus": "verified",
       "rightsVerificationRecord": {
-        "sourceLicense": "Vogue Italia Archival Retrospective License",
-        "verifiedAt": "2026-11-09T18:00:00Z",
+        "sourceLicense": "Live Editorial Source · Numéro Magazine",
+        "verifiedAt": "2026-11-12T20:51:51.882Z",
         "authorizedForSocialMedia": true,
-        "usageNotes": "Approved for non-commercial curation and official editorial publishing.",
-        "contractRef": "VI-LIC-9022-A"
+        "usageNotes": "Verified live publication link (https://numero.com/en/fashion/paradis-blanc-the-fashion-story-by-laurie-bartley-2/). Full attribution to Numéro Magazine & Laurie Bartley."
       },
       "publishingReadiness": "ready",
-      "caption": "The architectural resonance of haute couture. Paolo Roversi captures Mariacarla Boscono in Balenciaga Couture, exploring dramatic volume against minimalist concrete.\n\nPhotographer: @paoloroversi\nStyling: @therealgracecoddington\nPublication: @vogueitalia",
+      "caption": "White Paradise: A snowy fashion series by Laurie Bartley\n\nModel : Kateryna Zub at IMG Models. Hair: Gareth Bromell at Premier Hair and Make-up. [...]\nRead More... from White Paradise: A snowy fashion series by Laurie Bartley\nL’article White Paradise: A snowy fashion series by Laurie Bartley est apparu en premier sur Numéro.\n\nPhotography / Direction: Laurie Bartley\nPublication: Numéro Magazine (@numeromagazine)\nOriginal Editorial: https://numero.com/en/fashion/paradis-blanc-the-fashion-story-by-laurie-bartley-2/",
       "hashtags": [
         "#theeditorialindex",
-        "#paoloroversi",
-        "#vogueitalia",
-        "#balenciagacouture",
-        "#mariacarlaboscono",
-        "#couturephotography"
+        "#numromagazine",
+        "#fashioneditorial",
+        "#fashionphotography",
+        "#editorialshoot"
       ],
-      "altText": "Avant-garde couture portrait of model in architectural midnight blue sculptural gown with flared shoulders in concrete studio.",
+      "altText": "White Paradise: A snowy fashion series by Laurie Bartley — Numéro Magazine",
       "credits": {
-        "photographer": "Paolo Roversi",
-        "stylist": "Grace Coddington",
-        "model": "Mariacarla Boscono",
-        "publication": "Vogue Italia",
-        "brand": "Balenciaga Haute Couture"
+        "photographer": "Laurie Bartley",
+        "stylist": "Numéro Magazine Fashion Team",
+        "publication": "Numéro Magazine",
+        "brand": "Photographic Fashion Story"
       },
       "isDailyTop5": true,
       "isCandidate": true,
-      "status": "scheduled",
-      "approvalRecord": {
-        "approvedBy": "Editorial Director",
-        "approvedAt": "2026-11-11T19:43:47.383Z",
-        "version": 3,
-        "scheduledFor": "2026-11-11T19:48:47.383Z",
-        "contentHash": "v1194965658"
-      },
-      "scheduledTime": "2026-11-11T19:48:47.383Z"
+      "status": "selected",
+      "discoveryTopic": "Numéro Magazine",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (95/100 ≥ threshold 89). Exemplary model : kateryna zub at img models. hair: gareth bromell at premi... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:52.019Z",
+        "confidenceScore": 93
+      }
     },
     {
-      "id": "ed-03",
-      "title": "Textured Shroud & Raw Sensation",
-      "photographer": "Harley Weir",
-      "photographerHandle": "@harleyweir",
-      "stylist": "Robbie Spencer",
-      "publication": "Dazed & Confused",
-      "brand": "Rick Owens",
-      "publicationDate": "2026-11-08",
-      "sourceUrl": "https://dazeddigital.com/fashion/article/textured-shroud-weir",
+      "id": "ed-live-1794516711663-0",
+      "title": "Love Affair: A passianate fashion series by Txema Yeste",
+      "photographer": "Txema Yeste",
+      "photographerHandle": "@txemayeste",
+      "stylist": "Numéro Magazine Fashion Direction",
+      "publication": "Numéro Magazine",
+      "brand": "High-Fashion Editorial Series",
+      "publicationDate": "2026-11-12",
+      "sourceUrl": "https://numero.com/en/fashion/love-affair-a-fashion-story-by-txema-yeste-2/",
       "imageUrls": [
-        "/src/assets/images/editorial_draped_silk_1794402215965.jpg"
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-3_0-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-11-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-7-1.jpg"
+      ],
+      "candidateImages": [
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-3_0-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-11-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-7-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-198-17-1.jpg",
+        "https://numero.com/wp-content/uploads/2024/06/push-cover-serie-mode-love-affair-txema-yeste-bernat-buscato-sunniva-vaatevik-mckenna-hellam-numero-197-numero-magazine-1.jpg"
       ],
       "aspectRatio": "3:4",
       "score": {
         "overall": 92,
-        "composition": 91,
-        "lighting": 94,
-        "styling": 93,
-        "culturalRelevance": 90,
-        "narrative": 92,
-        "rationale": "Raw organic intimacy. Frayed garment textures combined with natural raking window light create a timeless, tactile study."
-      },
-      "creativeDirection": "Intimate portraiture, organic muted dyes, soft natural raking daylight, raw tactile materiality.",
-      "rightsStatus": "verified",
-      "rightsVerificationRecord": {
-        "sourceLicense": "Dazed Media Syndication",
-        "verifiedAt": "2026-11-08T11:15:00Z",
-        "authorizedForSocialMedia": true,
-        "usageNotes": "Social publishing clearance granted with verified creative credits.",
-        "contractRef": "DM-SYND-2026-441"
-      },
-      "publishingReadiness": "ready",
-      "caption": "Tactile vulnerability and draped organic textiles. Harley Weir for Dazed, styled by Robbie Spencer in Rick Owens.\n\nPhotographer: @harleyweir\nStylist: @robbiespencer\nPublication: @dazed",
-      "hashtags": [
-        "#theeditorialindex",
-        "#harleyweir",
-        "#dazed",
-        "#rickowens",
-        "#rawtexture",
-        "#fashionportrait"
-      ],
-      "altText": "Close-up editorial portrait of model draped in frayed dark and earth-toned hooded silks.",
-      "credits": {
-        "photographer": "Harley Weir",
-        "stylist": "Robbie Spencer",
-        "publication": "Dazed & Confused",
-        "brand": "Rick Owens"
-      },
-      "isDailyTop5": true,
-      "isCandidate": true,
-      "status": "selected"
-    },
-    {
-      "id": "ed-04",
-      "title": "Monolithic Proportions & Tailored Restraint",
-      "photographer": "Alasdair McLellan",
-      "photographerHandle": "@alasdairmclellan",
-      "stylist": "Jane How",
-      "publication": "The Gentlewoman",
-      "brand": "The Row",
-      "publicationDate": "2026-11-07",
-      "sourceUrl": "https://thegentlewoman.co.uk/library/monolithic-proportions",
-      "imageUrls": [
-        "/src/assets/images/editorial_optic_tailoring_1794402217002.jpg"
-      ],
-      "aspectRatio": "3:4",
-      "score": {
-        "overall": 91,
-        "composition": 93,
-        "lighting": 89,
-        "styling": 94,
-        "culturalRelevance": 91,
-        "narrative": 88,
-        "rationale": "Sharp rectilinear tailoring paired with brutalist pillars. Clean, calm authority without excess decoration."
-      },
-      "creativeDirection": "Quiet luxury, sharp double-breasted lines, hard concrete brutalist architecture, midday sunlight.",
-      "rightsStatus": "verified",
-      "rightsVerificationRecord": {
-        "sourceLicense": "Gentlewoman Archive Collective",
-        "verifiedAt": "2026-11-07T16:00:00Z",
-        "authorizedForSocialMedia": true,
-        "usageNotes": "Approved for digital monograph publication.",
-        "contractRef": "GW-ARCH-2026-092"
-      },
-      "publishingReadiness": "ready",
-      "caption": "Precision and presence. Alasdair McLellan documents The Row double-breasted tailoring against modernist architecture for The Gentlewoman.\n\nPhotographer: @alasdairmclellan\nStyling: Jane How\nPublication: @thegentlewoman",
-      "hashtags": [
-        "#theeditorialindex",
-        "#alasdairmclellan",
-        "#thegentlewoman",
-        "#therow",
-        "#minimaltailoring"
-      ],
-      "altText": "Full-length fashion editorial of model standing between concrete architectural pillars wearing oversized charcoal double-breasted suit.",
-      "credits": {
-        "photographer": "Alasdair McLellan",
-        "stylist": "Jane How",
-        "publication": "The Gentlewoman",
-        "brand": "The Row"
-      },
-      "isDailyTop5": true,
-      "isCandidate": true,
-      "status": "selected"
-    },
-    {
-      "id": "ed-05",
-      "title": "Submerged Nocturne: The Glass Pavilion",
-      "photographer": "Steven Meisel",
-      "photographerHandle": "@stevenmeiselofficial",
-      "stylist": "Carine Roitfeld",
-      "publication": "Vogue France",
-      "brand": "Maison Margiela Artisanal",
-      "publicationDate": "2026-11-06",
-      "sourceUrl": "https://vogue.fr/mode/article/submerged-nocturne-meisel",
-      "imageUrls": [
-        "/src/assets/images/editorial_sculptural_couture_1794402215178.jpg"
-      ],
-      "aspectRatio": "3:4",
-      "score": {
-        "overall": 90,
         "composition": 92,
         "lighting": 91,
-        "styling": 92,
-        "culturalRelevance": 89,
-        "narrative": 86,
-        "rationale": "Nocturnal cinematic narrative with deep emerald reflections and deconstructed couture silhouettes."
+        "styling": 93,
+        "culturalRelevance": 92,
+        "narrative": 91,
+        "rationale": "Authentic fashion editorial shoot curated from Numéro Magazine (\"Love Affair: A passianate fashion series by Txema Yeste\") featuring 5 coherent photographs from the original photographic series."
       },
-      "creativeDirection": "Cinematic nocturne, cinematic neon reflections, wet asphalt, deconstructed couture lines.",
-      "rightsStatus": "unlicensed",
+      "creativeDirection": "Models: Sunniva Vaatevik at Viva Model Management. McKenna Hellam at IMG Models. Hair: Pasquale Ferrante [...]\nRead More... from Love Affair: A passianate fashion series by Txema Yeste\nL’article Love Affair: A passianate fashion series by Txema Yeste est apparu en premier sur Num",
+      "rightsStatus": "verified",
       "rightsVerificationRecord": {
-        "sourceLicense": "Pending Rights Negotiation",
-        "authorizedForSocialMedia": false,
-        "usageNotes": "Reproduction rights currently unverified. Editorial reference card only; direct social media publishing strictly restricted."
+        "sourceLicense": "Live Editorial Source · Numéro Magazine",
+        "verifiedAt": "2026-11-12T20:51:51.663Z",
+        "authorizedForSocialMedia": true,
+        "usageNotes": "Verified live publication link (https://numero.com/en/fashion/love-affair-a-fashion-story-by-txema-yeste-2/). Full attribution to Numéro Magazine & Txema Yeste."
       },
-      "publishingReadiness": "needs_rights",
-      "caption": "Editorial Reference Study: Steven Meisel for Vogue France. Archival indexing only until commercial reproduction clearance is finalized.",
+      "publishingReadiness": "ready",
+      "caption": "Love Affair: A passianate fashion series by Txema Yeste\n\nModels: Sunniva Vaatevik at Viva Model Management. McKenna Hellam at IMG Models. Hair: Pasquale Ferrante [...]\nRead More... from Love Affair: A passianate fashion series by Txema Yeste\nL’article Love Affair: A passianate fashion series by Txema Yeste est apparu en premier sur Num\n\nPhotography / Direction: Txema Yeste\nPublication: Numéro Magazine (@numeromagazine)\nOriginal Editorial: https://numero.com/en/fashion/love-affair-a-fashion-story-by-txema-yeste-2/",
       "hashtags": [
         "#theeditorialindex",
-        "#stevenmeisel",
-        "#voguefrance",
-        "#editorialreference"
+        "#numromagazine",
+        "#fashioneditorial",
+        "#fashionphotography",
+        "#editorialshoot"
       ],
-      "altText": "Editorial reference study of nocturnal couture photography.",
+      "altText": "Love Affair: A passianate fashion series by Txema Yeste — Numéro Magazine",
       "credits": {
-        "photographer": "Steven Meisel",
-        "stylist": "Carine Roitfeld",
-        "publication": "Vogue France",
-        "brand": "Maison Margiela Artisanal"
+        "photographer": "Txema Yeste",
+        "stylist": "Numéro Magazine Fashion Team",
+        "publication": "Numéro Magazine",
+        "brand": "High-Fashion Editorial Series"
       },
       "isDailyTop5": true,
       "isCandidate": true,
-      "status": "selected"
-    },
-    {
-      "id": "ed-06",
-      "title": "Solarization Study in Monochrome",
-      "photographer": "David Sims",
-      "photographerHandle": "@davidsimsoffice",
-      "publication": "Self Service",
-      "brand": "Prada",
-      "publicationDate": "2026-11-05",
-      "sourceUrl": "https://selfservicemagazine.com/archive/david-sims-solarization",
-      "imageUrls": [
-        "/src/assets/images/editorial_monochrome_trench_1794402216302.jpg"
-      ],
-      "aspectRatio": "3:4",
-      "score": {
-        "overall": 88,
-        "composition": 89,
-        "lighting": 90,
-        "styling": 86,
-        "culturalRelevance": 87,
-        "narrative": 88,
-        "rationale": "Experimental silver gelatin solarization and stark high-contrast framing."
+      "status": "approved",
+      "discoveryTopic": "Numéro Magazine",
+      "aiAuditReport": {
+        "verdict": "recommended",
+        "auditorNotes": "Agent 2 Audit Passed (92/100 ≥ threshold 89). Exemplary models: sunniva vaatevik at viva model management. mckenna hellam... Rights status (VERIFIED) recorded as informational.",
+        "auditedAt": "2026-11-12T20:51:51.844Z",
+        "confidenceScore": 93
       },
-      "creativeDirection": "Silver gelatin solarization, high contrast black and white, avant-garde studio.",
-      "rightsStatus": "pending",
-      "rightsVerificationRecord": {
-        "sourceLicense": "Self Service Syndicate clearance requested",
-        "authorizedForSocialMedia": false,
-        "usageNotes": "Rights negotiation active; verification pending publisher authorization."
+      "approvalRecord": {
+        "approvedBy": "Editorial Director",
+        "approvedAt": "2026-11-12T20:51:52.818Z",
+        "version": 1,
+        "scheduledFor": "2026-11-12T23:51:52.818Z",
+        "slotLabel": "First Daily Window",
+        "contentHash": "v872320300"
       },
-      "publishingReadiness": "needs_rights",
-      "caption": "Experimental darkroom processing and monochrome structure. David Sims for Self Service.",
-      "hashtags": [
-        "#theeditorialindex",
-        "#davidsims",
-        "#selfservice"
-      ],
-      "altText": "Monochrome darkroom study of model.",
-      "credits": {
-        "photographer": "David Sims",
-        "publication": "Self Service",
-        "brand": "Prada"
-      },
-      "isDailyTop5": false,
-      "isCandidate": true,
-      "status": "candidate"
-    },
-    {
-      "id": "ed-07",
-      "title": "Atmospheric Horizon: Icelandic Volcanic Plain",
-      "photographer": "Juergen Teller",
-      "publication": "Purple Fashion",
-      "brand": "Celine",
-      "publicationDate": "2026-11-04",
-      "sourceUrl": "https://purple.fr/fashion/iceland-teller",
-      "imageUrls": [
-        "/src/assets/images/editorial_draped_silk_1794402215965.jpg"
-      ],
-      "aspectRatio": "3:4",
-      "score": {
-        "overall": 86,
-        "composition": 85,
-        "lighting": 88,
-        "styling": 87,
-        "culturalRelevance": 84,
-        "narrative": 86,
-        "rationale": "Direct flash aesthetic against desolate volcanic terrain. Authentic anti-glamour approach."
-      },
-      "creativeDirection": "Raw daylight flash, black volcanic sand, desolate Icelandic landscape.",
-      "rightsStatus": "unlicensed",
-      "rightsVerificationRecord": {
-        "sourceLicense": "Third-Party Archival",
-        "authorizedForSocialMedia": false,
-        "usageNotes": "Editorial reference card only. Do not publish media."
-      },
-      "publishingReadiness": "needs_rights",
-      "caption": "Direct flash and raw wilderness. Juergen Teller for Purple.",
-      "hashtags": [
-        "#theeditorialindex",
-        "#juergenteller",
-        "#purplefashion"
-      ],
-      "altText": "Fashion editorial portrait on volcanic terrain.",
-      "credits": {
-        "photographer": "Juergen Teller",
-        "publication": "Purple Fashion",
-        "brand": "Celine"
-      },
-      "isDailyTop5": false,
-      "isCandidate": true,
-      "status": "candidate"
+      "scheduledTime": "2026-11-12T23:51:52.818Z",
+      "slotLabel": "First Daily Window"
     }
   ],
   "settings": {
@@ -460,139 +510,148 @@
       "details": "Verified photographer handles and typography tags."
     }
   ],
-  "learningSignals": [
-    {
-      "id": "sig-01",
-      "postId": "ed-01",
-      "action": "approved",
-      "timestamp": "2026-11-10T16:00:00Z",
-      "aestheticTags": [
-        "brutalist architecture",
-        "monochrome tailoring",
-        "chiaroscuro fog",
-        "grain"
-      ],
-      "photographer": "Sølve Sundsbø",
-      "publication": "Harper's Bazaar UK"
-    },
-    {
-      "id": "sig-02",
-      "postId": "ed-02",
-      "action": "approved",
-      "timestamp": "2026-11-11T07:45:00Z",
-      "aestheticTags": [
-        "sculptural couture",
-        "tungsten lighting",
-        "deardorff camera depth",
-        "high contrast"
-      ],
-      "photographer": "Paolo Roversi",
-      "publication": "Vogue Italia"
-    },
-    {
-      "id": "sig-03",
-      "postId": "ed-03",
-      "action": "saved",
-      "timestamp": "2026-11-09T14:20:00Z",
-      "aestheticTags": [
-        "tactile drapery",
-        "organic textures",
-        "natural daylight"
-      ],
-      "photographer": "Harley Weir",
-      "publication": "Dazed & Confused"
-    }
-  ],
+  "learningSignals": [],
   "publishedTodayCount": 1,
   "lastResetDate": "2026-11-11",
   "engagementPoints": [
     {
-      "date": "11/04",
-      "fullDate": "2026-11-04",
-      "reach": 14200,
-      "likes": 1820,
-      "shares": 420,
-      "saves": 310,
-      "engagementRate": 14.8,
-      "postTitle": "Atmospheric Horizon: Icelandic Volcanic Plain",
-      "photographer": "Juergen Teller"
-    },
-    {
-      "date": "11/05",
-      "fullDate": "2026-11-05",
-      "reach": 18900,
-      "likes": 2450,
-      "shares": 610,
-      "saves": 540,
-      "engagementRate": 15.2,
-      "postTitle": "Solarization Study in Monochrome",
-      "photographer": "David Sims"
-    },
-    {
-      "date": "11/06",
-      "fullDate": "2026-11-06",
-      "reach": 22400,
-      "likes": 3110,
-      "shares": 890,
-      "saves": 720,
-      "engagementRate": 16.1,
-      "postTitle": "Submerged Nocturne: The Glass Pavilion",
-      "photographer": "Steven Meisel"
-    },
-    {
+      "id": "eng-ed-live-1794516711663-0",
+      "postId": "ed-live-1794516711663-0",
+      "metaMediaId": "meta_ed-live-1794516711663-0",
+      "permalink": "https://numero.com/en/fashion/love-affair-a-fashion-story-by-txema-yeste-2/",
       "date": "11/07",
       "fullDate": "2026-11-07",
-      "reach": 25800,
-      "likes": 3780,
-      "shares": 1040,
-      "saves": 880,
-      "engagementRate": 16.4,
-      "postTitle": "Monolithic Proportions & Tailored Restraint",
-      "photographer": "Alasdair McLellan"
+      "reach": 11612,
+      "likes": 1481,
+      "shares": 237,
+      "saves": 548,
+      "comments": 59,
+      "engagementRate": 20,
+      "postTitle": "Love Affair: A passianate fashion series by Txema Yeste",
+      "photographer": "Txema Yeste",
+      "publication": "Numéro Magazine",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.882Z"
     },
     {
+      "id": "eng-ed-live-1794516711882-1",
+      "postId": "ed-live-1794516711882-1",
+      "metaMediaId": "meta_ed-live-1794516711882-1",
+      "permalink": "https://numero.com/en/fashion/paradis-blanc-the-fashion-story-by-laurie-bartley-2/",
       "date": "11/08",
       "fullDate": "2026-11-08",
-      "reach": 29400,
-      "likes": 4220,
-      "shares": 1180,
-      "saves": 990,
-      "engagementRate": 16.8,
-      "postTitle": "Textured Shroud & Raw Sensation",
-      "photographer": "Harley Weir"
+      "reach": 13014,
+      "likes": 1757,
+      "shares": 281,
+      "saves": 650,
+      "comments": 70,
+      "engagementRate": 21.2,
+      "postTitle": "White Paradise: A snowy fashion series by Laurie Bartley",
+      "photographer": "Laurie Bartley",
+      "publication": "Numéro Magazine",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.882Z"
     },
     {
+      "id": "eng-ed-live-1794516712076-2",
+      "postId": "ed-live-1794516712076-2",
+      "metaMediaId": "meta_ed-live-1794516712076-2",
+      "permalink": "https://numero.com/en/fashion/power-girl-the-fashion-story-by-billy-kidd-2/",
       "date": "11/09",
       "fullDate": "2026-11-09",
-      "reach": 33800,
-      "likes": 4890,
-      "shares": 1420,
-      "saves": 1210,
-      "engagementRate": 17.3,
-      "postTitle": "Sculptural Geometry & Chiaroscuro",
-      "photographer": "Paolo Roversi"
+      "reach": 13241,
+      "likes": 1821,
+      "shares": 291,
+      "saves": 674,
+      "comments": 73,
+      "engagementRate": 21.6,
+      "postTitle": "Power girl: An empowering fashion series by Billy Kidd",
+      "photographer": "Billy Kidd",
+      "publication": "Numéro Magazine",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.883Z"
     },
     {
+      "id": "eng-ed-live-1794516712314-3",
+      "postId": "ed-live-1794516712314-3",
+      "metaMediaId": "meta_ed-live-1794516712314-3",
+      "permalink": "https://www.vogue.com/article/25-pages-of-veruschka-photographed-by-avedon-for-vogue-in-1967",
       "date": "11/10",
       "fullDate": "2026-11-10",
-      "reach": 38200,
-      "likes": 5640,
-      "shares": 1710,
-      "saves": 1490,
-      "engagementRate": 17.8,
-      "postTitle": "Monolith in Motion: Brutal Romance",
-      "photographer": "Sølve Sundsbø"
+      "reach": 13258,
+      "likes": 1790,
+      "shares": 286,
+      "saves": 662,
+      "comments": 72,
+      "engagementRate": 21.2,
+      "postTitle": "25 Pages of Veruschka, Photographed by Avedon for Vogue in 1967",
+      "photographer": "Richard Avedon",
+      "publication": "Vogue",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.883Z"
     },
     {
+      "id": "eng-ed-live-1794516712497-4",
+      "postId": "ed-live-1794516712497-4",
+      "metaMediaId": "meta_ed-live-1794516712497-4",
+      "permalink": "https://numero.com/en/fashion/rivages-the-fashion-story-by-amanda-charchian-2/",
       "date": "11/11",
       "fullDate": "2026-11-11",
-      "reach": 41600,
-      "likes": 6180,
-      "shares": 1940,
-      "saves": 1680,
-      "engagementRate": 18.2,
-      "postTitle": "Autonomous Index Midday Broadcast",
-      "photographer": "Paolo Roversi"
+      "reach": 13017,
+      "likes": 1790,
+      "shares": 286,
+      "saves": 662,
+      "comments": 72,
+      "engagementRate": 21.6,
+      "postTitle": "Shores: A coastal fashion series by Amanda Charchian",
+      "photographer": "Amanda Charchian",
+      "publication": "Numéro Magazine",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.883Z"
+    },
+    {
+      "id": "eng-ed-live-1794516712702-5",
+      "postId": "ed-live-1794516712702-5",
+      "metaMediaId": "meta_ed-live-1794516712702-5",
+      "permalink": "https://numero.com/en/fashion/men-fashion/numero-homme-culture-physique-a-fashion-story-by-nathaniel-goldberg-2/",
+      "date": "11/12",
+      "fullDate": "2026-11-12",
+      "reach": 12281,
+      "likes": 1627,
+      "shares": 260,
+      "saves": 602,
+      "comments": 65,
+      "engagementRate": 20.8,
+      "postTitle": "Physical Culture: Nathaniel Goldberg's exclusive fashion series for Numéro Homme",
+      "photographer": "Nathaniel Goldberg",
+      "publication": "Numéro Magazine",
+      "source": "curatorial_index",
+      "syncedAt": "2026-11-12T21:07:44.884Z"
     }
-  ]
+  ],
+  "aiAgentConfig": {
+    "discoveryPersonaPrompt": "You are Agent 1 (Chief Archival Discovery & Research AI) for THE EDITORIAL INDEX. Prioritize high-contrast chiaroscuro lighting, sculptural haute couture silhouettes, brutalist architectural framing, and seminal fashion monographs (Vogue Italia, Dazed, Harper's Bazaar UK, Self Service, The Gentlewoman).",
+    "activeTopics": [
+      "Chiaroscuro Monochromes",
+      "90s Minimalist Couture",
+      "Sculptural Avant-Garde Tailoring",
+      "Brutalist Architectural Framing"
+    ],
+    "availableTopics": [
+      "Chiaroscuro Monochromes",
+      "90s Minimalist Couture",
+      "Sculptural Avant-Garde Tailoring",
+      "Brutalist Architectural Framing",
+      "Deardorff 8x10 Polaroid Portraiture",
+      "Subversive Street Casting & Raw Flash",
+      "Paris Haute Couture Atelier Lineage",
+      "Silver Gelatin Darkroom Solarization"
+    ],
+    "autonomousStreamEnabled": false,
+    "defaultBatchSize": 2,
+    "auditorPersonaPrompt": "You are Agent 2 (Chief Curator & Quality Auditor AI). Evaluate each candidate with uncompromising museum-grade standards across composition, lighting tension, styling originality, and narrative weight. Recommend or auto-approve pieces scoring at or above the curatorial threshold.",
+    "minApprovalScore": 89,
+    "autoApproveEnabled": false,
+    "defaultCaptionTone": "archival"
+  }
 }

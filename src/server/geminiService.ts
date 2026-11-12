@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { calculateEditorialScore } from '../lib/scoring';
-import { AiAgentConfig, AiAuditReport, EditorialPost, EditorialScore, RightsStatus } from '../types/editorial';
+import { calculateEditorialScore, calculatePostLearningDelta, computeLearningProfile } from '../lib/scoring';
+import { AiAgentConfig, AiAuditReport, EditorialLearningSignal, EditorialPost, EditorialScore, RightsStatus } from '../types/editorial';
 
 function getAiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -267,11 +267,15 @@ Formatting Rules:
  */
 export async function auditEditorialCandidateWithGemini(
   post: EditorialPost,
-  aiConfig: AiAgentConfig
+  aiConfig: AiAgentConfig,
+  learningSignals: EditorialLearningSignal[] = []
 ): Promise<AiAuditReport> {
   const ai = getAiClient();
   const minScore = aiConfig.minApprovalScore || 88;
-  const passesThreshold = post.score.overall >= minScore;
+  const learningAdj = calculatePostLearningDelta(post, learningSignals);
+  const learningProfile = computeLearningProfile(learningSignals);
+  const effectiveScore = Math.max(0, Math.min(100, post.score.overall + learningAdj.delta));
+  const passesThreshold = effectiveScore >= minScore;
 
   const fallbackVerdict: AiAuditReport['verdict'] = passesThreshold
     ? aiConfig.autoApproveEnabled
@@ -279,16 +283,21 @@ export async function auditEditorialCandidateWithGemini(
       : 'recommended'
     : 'needs_review';
 
+  const learningBadge =
+    learningAdj.delta !== 0
+      ? ` Active Learning Signal adjustment: ${learningAdj.delta > 0 ? `+${learningAdj.delta}` : learningAdj.delta} pts (${learningAdj.matchedReasons.join(', ')}).`
+      : '';
+
   const fallbackNotes = passesThreshold
-    ? `Agent 2 Audit Passed (${post.score.overall}/100 ≥ threshold ${minScore}). Exemplary ${post.creativeDirection.toLowerCase().slice(0, 65)}... Rights status (${post.rightsStatus.toUpperCase()}) recorded as informational.`
-    : `Agent 2 Review Flag (${post.score.overall}/100 < threshold ${minScore}). Hold for manual director evaluation of composition and narrative weight.`;
+    ? `Agent 2 Audit Passed (${effectiveScore}/100 ≥ threshold ${minScore}).${learningBadge} Exemplary ${post.creativeDirection.toLowerCase().slice(0, 65)}...`
+    : `Agent 2 Review Flag (${effectiveScore}/100 < threshold ${minScore}).${learningBadge} Hold for manual director evaluation of composition and narrative weight.`;
 
   if (!ai) {
     return {
       verdict: fallbackVerdict,
       auditorNotes: fallbackNotes,
       auditedAt: new Date().toISOString(),
-      confidenceScore: Math.min(99, Math.max(82, post.score.overall + 2)),
+      confidenceScore: Math.min(99, Math.max(82, effectiveScore + 2)),
     };
   }
 
@@ -296,16 +305,17 @@ export async function auditEditorialCandidateWithGemini(
     const prompt = `${aiConfig.auditorPersonaPrompt}
 Minimum Approval Score Threshold: ${minScore}/100
 Auto-Approve Enabled: ${aiConfig.autoApproveEnabled}
+Learned Curatorial Preferences from Human Approvals/Rejections: ${learningProfile.promptDirectiveSummary}
 
 Audit this fashion editorial candidate:
 - Title: "${post.title}"
 - Photographer: ${post.photographer}
 - Publication: ${post.publication}
-- Current Score: ${post.score.overall}/100 (Composition: ${post.score.composition}, Lighting: ${post.score.lighting}, Styling: ${post.score.styling})
+- Base Score: ${post.score.overall}/100 | Learned Adjustment: ${learningAdj.delta > 0 ? `+${learningAdj.delta}` : learningAdj.delta} pts -> Effective Score: ${effectiveScore}/100
 - Creative Direction: ${post.creativeDirection}
 - Rights Status (Informational Only, Non-Blocking): ${post.rightsStatus}
 
-Provide a 1-2 sentence museum-grade curatorial audit note and confidence score (80-99).`;
+Provide a 1-2 sentence museum-grade curatorial audit note (referencing how it aligns with learned preferences if applicable) and confidence score (80-99).`;
 
     const response = await withTimeout(
       ai.models.generateContent({

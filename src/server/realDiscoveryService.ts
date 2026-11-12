@@ -1,5 +1,5 @@
-import { calculateEditorialScore } from '../lib/scoring';
-import { AiAgentConfig, EditorialPost, RightsStatus } from '../types/editorial';
+import { calculateEditorialScore, calculatePostLearningDelta, computeLearningProfile } from '../lib/scoring';
+import { AiAgentConfig, EditorialLearningSignal, EditorialPost, RightsStatus } from '../types/editorial';
 import { auditEditorialCandidateWithGemini } from './geminiService';
 
 export interface ScrapedEditorialSource {
@@ -516,7 +516,8 @@ async function buildPostFromRealArticle(
   shootImages: string[],
   aiConfig: AiAgentConfig,
   indexOffset = 0,
-  isDailyTop5 = true
+  isDailyTop5 = true,
+  learningSignals: EditorialLearningSignal[] = []
 ): Promise<EditorialPost> {
   const defaultSelectedCarousel = shootImages.slice(0, Math.min(3, shootImages.length));
 
@@ -526,7 +527,7 @@ async function buildPostFromRealArticle(
   const rel = 92 + ((indexOffset * 4) % 7);
   const narr = 91 + ((indexOffset * 3) % 7);
 
-  const score = calculateEditorialScore({
+  const baseScore = calculateEditorialScore({
     composition: comp,
     lighting: light,
     styling: styl,
@@ -555,7 +556,7 @@ async function buildPostFromRealArticle(
     imageUrls: defaultSelectedCarousel,
     candidateImages: shootImages,
     aspectRatio: '3:4',
-    score,
+    score: baseScore,
     creativeDirection:
       article.description ||
       `Original fashion photography series published by ${article.publicationName}. Includes ${shootImages.length} coherent frames extracted directly from the shoot.`,
@@ -588,7 +589,17 @@ async function buildPostFromRealArticle(
     discoveryTopic: article.publicationName,
   };
 
-  post.aiAuditReport = await auditEditorialCandidateWithGemini(post, aiConfig);
+  // Apply Active Learning Signal adjustment to the post's score and rationale
+  const learningAdj = calculatePostLearningDelta(post, learningSignals);
+  if (learningAdj.delta !== 0) {
+    post.score = {
+      ...post.score,
+      overall: Math.max(55, Math.min(99, post.score.overall + learningAdj.delta)),
+      rationale: `${post.score.rationale} [Active Learning Weight: ${learningAdj.delta > 0 ? `+${learningAdj.delta}` : learningAdj.delta} pts via ${learningAdj.matchedReasons.join(', ')}]`,
+    };
+  }
+
+  post.aiAuditReport = await auditEditorialCandidateWithGemini(post, aiConfig, learningSignals);
   return post;
 }
 
@@ -596,7 +607,7 @@ async function buildPostFromRealArticle(
  * Main Discovery & Curation Pipeline:
  * 1. If query is a live http/https URL -> scrapes that exact article URL and extracts all coherent shoot photos.
  * 2. Otherwise -> fetches live fashion editorial series from Numéro Magazine, Vogue Runway, Interview Magazine, and Dazed Digital,
- *    strictly filters out product/shopping roundups (shoes, watches, luggage, bags), and scrapes each shoot's real HTML gallery.
+ *    strictly filters out product/shopping roundups (shoes, watches, luggage, bags), and applies Active Learning Signal weights.
  */
 export async function discoverRealEditorials(params: {
   query?: string;
@@ -604,13 +615,20 @@ export async function discoverRealEditorials(params: {
   count?: number;
   aiConfig: AiAgentConfig;
   existingPosts: EditorialPost[];
+  learningSignals?: EditorialLearningSignal[];
 }): Promise<{
   posts: EditorialPost[];
   steps: string[];
 }> {
   const count = Math.min(6, Math.max(1, params.count || params.aiConfig.defaultBatchSize || 2));
   const query = (params.query || '').trim();
+  const signals = params.learningSignals || [];
+  const learningProfile = computeLearningProfile(signals);
   const steps: string[] = [];
+
+  if (signals.length > 0) {
+    steps.push(`Active Learning Engine engaged (${signals.length} signal(s)): ${learningProfile.promptDirectiveSummary}`);
+  }
 
   const existingTitleKeys = new Set(params.existingPosts.map((p) => normalizeTitleKey(p.title)));
   const existingUrls = new Set(params.existingPosts.map((p) => p.sourceUrl.split('?')[0]));
@@ -645,7 +663,7 @@ export async function discoverRealEditorials(params: {
         categoryTag: 'Direct URL Curation',
         seedImages: scraped.images,
       };
-      const post = await buildPostFromRealArticle(articleObj, scraped.images, params.aiConfig, 0, true);
+      const post = await buildPostFromRealArticle(articleObj, scraped.images, params.aiConfig, 0, true, signals);
       results.push(post);
       steps.push(
         `Extracted ${scraped.images.length} coherent shoot photograph(s) from ${host} (${post.imageUrls.length} pre-selected for Carousel).`
@@ -711,6 +729,22 @@ export async function discoverRealEditorials(params: {
       ) {
         matchScore += 15;
       }
+
+      // Active Learning Signal Boost / Penalty on candidate discovery ranking
+      const photogKey = art.author.trim().toLowerCase();
+      const pubKey = art.publicationName.trim().toLowerCase();
+      if (learningProfile.photographerWeights[photogKey]) {
+        matchScore += learningProfile.photographerWeights[photogKey] * 3;
+      }
+      if (learningProfile.publicationWeights[pubKey]) {
+        matchScore += learningProfile.publicationWeights[pubKey] * 2;
+      }
+      for (const t of learningProfile.tags) {
+        if (t.tag.length > 2 && hay.includes(t.tag)) {
+          matchScore += t.weight * 2;
+        }
+      }
+
       return { art, matchScore, orderIdx };
     })
     .sort((a, b) => b.matchScore - a.matchScore || a.orderIdx - b.orderIdx);
@@ -738,7 +772,8 @@ export async function discoverRealEditorials(params: {
       shootPhotos,
       params.aiConfig,
       idx,
-      results.length < 5
+      results.length < 5,
+      signals
     );
 
     results.push(post);
@@ -747,7 +782,7 @@ export async function discoverRealEditorials(params: {
     idx += 1;
 
     steps.push(
-      `[${art.publicationName}] "${art.title.slice(0, 58)}..." (Photographed by ${art.author}) → Extracted ${shootPhotos.length} shoot frames.`
+      `[${art.publicationName}] "${art.title.slice(0, 58)}..." (Photographed by ${art.author}) → Extracted ${shootPhotos.length} shoot frames (Score: ${post.score.overall}/100).`
     );
   }
 

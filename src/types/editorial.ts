@@ -124,6 +124,7 @@ export interface InstagramAccountConfig {
   accountType: 'BUSINESS' | 'CREATOR' | 'PERSONAL_INELIGIBLE' | 'NOT_CONNECTED';
   username?: string;
   accountId?: string;
+  accessToken?: string;
   tokenExpiresAt?: string;
   permissions: string[];
   lastPublishError?: string;
@@ -144,22 +145,34 @@ export interface SystemSettings {
 export interface EditorialLearningSignal {
   id: string;
   postId: string;
+  postTitle?: string;
+  sourceUrl?: string;
   action: 'approved' | 'rejected' | 'saved' | 'rated';
   rating?: number;
   timestamp: string;
   aestheticTags: string[];
   photographer: string;
   publication: string;
+  scoreDelta?: number;
 }
 
 export interface EditorialEngagementPoint {
+  id?: string;
+  postId?: string;
+  metaMediaId?: string;
+  permalink?: string;
   date: string;
   fullDate: string;
   reach: number;
   likes: number;
   shares: number;
   saves: number;
+  comments?: number;
   engagementRate: number;
   postTitle?: string;
   photographer?: string;
+  publication?: string;
+  source?: 'meta_graph_api' | 'curatorial_index';
+  syncedAt?: string;
 }
+

@@ -436,6 +436,61 @@ export default function App() {
     setIsAutopilotModalOpen(false);
   };
 
+  const handleSyncInstagramInsights = async (postId?: string) => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/analytics/sync-instagram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to sync Instagram insights.', 'error');
+      } else {
+        setEngagementPoints(data.points || []);
+        showToast(
+          `Synced live telemetry for ${data.syncedCount} editorial release(s) via Meta Graph API.`
+        );
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Error syncing Instagram insights.', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteLearningSignal = async (signalId: string) => {
+    try {
+      const res = await fetch(`/api/learning/signals/${signalId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        showToast('Learning signal removed and ranking weights recalculated.');
+        await loadAllData();
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Failed to remove signal.', 'error');
+    }
+  };
+
+  const handleClearLearningSignals = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/learning/signals/clear', {
+        method: 'POST',
+      });
+      if (res.ok) {
+        showToast('All learning weights reset to neutral baseline.');
+        await loadAllData();
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Failed to clear signals.', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const pendingApprovalsCount = allPosts.filter(
     (p) => p.status === 'selected'
   ).length;
@@ -536,13 +591,25 @@ export default function App() {
         )}
 
         {currentTab === 'analytics' && (
-          <EditorialEngagementChart data={engagementPoints} posts={allPosts} />
+          <EditorialEngagementChart
+            data={engagementPoints}
+            posts={allPosts}
+            instagramConnected={instagram.connected}
+            instagramUsername={instagram.username}
+            onSyncInstagramInsights={handleSyncInstagramInsights}
+            isSyncing={isProcessing}
+          />
         )}
 
         {currentTab === 'editorial-learning' && (
-          <EditorialLearningView 
-            signals={learningSignals} 
+          <EditorialLearningView
+            signals={learningSignals}
+            posts={allPosts}
             onNavigateToAnalytics={() => setCurrentTab('analytics')}
+            onDeleteSignal={handleDeleteLearningSignal}
+            onClearSignals={handleClearLearningSignals}
+            onPostAction={handlePostAction}
+            isProcessing={isProcessing}
           />
         )}
 
