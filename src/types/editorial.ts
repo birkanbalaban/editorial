@@ -55,6 +55,7 @@ export interface EditorialPost {
   publicationDate: string;
   sourceUrl: string;
   imageUrls: string[];
+  candidateImages?: string[];
   aspectRatio: '4:5' | '1:1' | '3:4';
   score: EditorialScore;
   creativeDirection: string;

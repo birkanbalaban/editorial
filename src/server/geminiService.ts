@@ -17,6 +17,15 @@ function getAiClient(): GoogleGenAI | null {
   });
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms = 4000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Gemini request timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 const ARCHIVAL_IMAGES = [
   '/src/assets/images/editorial_sculptural_couture_1794402215178.jpg',
   '/src/assets/images/editorial_monochrome_trench_1794402216302.jpg',
@@ -79,43 +88,46 @@ Perform a rigorous editorial review:
 5. Suggest 5-6 relevant hashtags.
 6. Provide descriptive accessibility alt text.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            composition: { type: Type.INTEGER, description: 'Score 0-100' },
-            lighting: { type: Type.INTEGER, description: 'Score 0-100' },
-            styling: { type: Type.INTEGER, description: 'Score 0-100' },
-            culturalRelevance: { type: Type.INTEGER, description: 'Score 0-100' },
-            narrative: { type: Type.INTEGER, description: 'Score 0-100' },
-            rationale: { type: Type.STRING },
-            creativeDirection: { type: Type.STRING },
-            caption: { type: Type.STRING },
-            hashtags: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              composition: { type: Type.INTEGER, description: 'Score 0-100' },
+              lighting: { type: Type.INTEGER, description: 'Score 0-100' },
+              styling: { type: Type.INTEGER, description: 'Score 0-100' },
+              culturalRelevance: { type: Type.INTEGER, description: 'Score 0-100' },
+              narrative: { type: Type.INTEGER, description: 'Score 0-100' },
+              rationale: { type: Type.STRING },
+              creativeDirection: { type: Type.STRING },
+              caption: { type: Type.STRING },
+              hashtags: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              altText: { type: Type.STRING },
             },
-            altText: { type: Type.STRING },
+            required: [
+              'composition',
+              'lighting',
+              'styling',
+              'culturalRelevance',
+              'narrative',
+              'rationale',
+              'creativeDirection',
+              'caption',
+              'hashtags',
+              'altText',
+            ],
           },
-          required: [
-            'composition',
-            'lighting',
-            'styling',
-            'culturalRelevance',
-            'narrative',
-            'rationale',
-            'creativeDirection',
-            'caption',
-            'hashtags',
-            'altText',
-          ],
         },
-      },
-    });
+      }),
+      4000
+    );
 
     const parsed = JSON.parse(response.text || '{}');
     const score = calculateEditorialScore({
@@ -221,14 +233,17 @@ Formatting Rules:
   "hashtags": ["#tag1", "#tag2", "#tag3"]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        temperature: 0.3,
-        responseMimeType: 'application/json',
-      },
-    });
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          temperature: 0.3,
+          responseMimeType: 'application/json',
+        },
+      }),
+      3500
+    );
 
     const parsed = JSON.parse(response.text || '{}');
     return {
@@ -292,22 +307,25 @@ Audit this fashion editorial candidate:
 
 Provide a 1-2 sentence museum-grade curatorial audit note and confidence score (80-99).`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        temperature: 0.2,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            auditorNotes: { type: Type.STRING },
-            confidenceScore: { type: Type.INTEGER },
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          temperature: 0.2,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              auditorNotes: { type: Type.STRING },
+              confidenceScore: { type: Type.INTEGER },
+            },
+            required: ['auditorNotes', 'confidenceScore'],
           },
-          required: ['auditorNotes', 'confidenceScore'],
         },
-      },
-    });
+      }),
+      3500
+    );
 
     const parsed = JSON.parse(response.text || '{}');
     return {

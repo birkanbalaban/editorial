@@ -209,7 +209,7 @@ export default function App() {
     }
   };
 
-  const handleDiscoverBatch = async (params: { query?: string; topics?: string[]; count?: number }) => {
+  const handleDiscoverBatch = async (params: { query?: string; topics?: string[]; count?: number }): Promise<{ count: number; posts: EditorialPost[]; steps: string[] } | null> => {
     setIsProcessing(true);
     try {
       const res = await fetch('/api/ai/discover-batch', {
@@ -220,12 +220,41 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) {
         showToast(data.error || 'AI Discovery sweep failed.', 'error');
+        return null;
       } else {
-        showToast(`Agent 1 discovered & Agent 2 audited ${data.count} new editorial(s).`);
+        showToast(`Agent 1 discovered & Agent 2 audited ${data.count} unique editorial(s).`);
         await loadAllData();
+        return {
+          count: data.count || 0,
+          posts: data.posts || [],
+          steps: data.steps || [],
+        };
       }
     } catch (e: any) {
       showToast(e.message || 'Error during AI discovery sweep.', 'error');
+      return null;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeduplicate = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/ai/deduplicate', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(
+          data.removedCount > 0
+            ? `Removed ${data.removedCount} duplicate editorial(s). ${data.remainingCount} unique works in archive.`
+            : `Archive verified: 0 duplicates found (${data.remainingCount} unique works).`
+        );
+        await loadAllData();
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Deduplication failed.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -455,6 +484,7 @@ export default function App() {
             aiConfig={aiAgentConfig}
             onUpdateAiConfig={handleUpdateAiConfig}
             onDiscoverBatch={handleDiscoverBatch}
+            onDeduplicate={handleDeduplicate}
             onAuditAll={handleAuditCandidates}
             onPostAction={handlePostAction}
             onOpenCaptionEditor={(post) => setEditingPost(post)}
@@ -524,7 +554,9 @@ export default function App() {
             geminiConnected={geminiConnected}
             onUpdateSettings={handleUpdateSettings}
             onUpdateAiConfig={handleUpdateAiConfig}
-            onTestAiPipeline={() => handleDiscoverBatch({ count: 1 })}
+            onTestAiPipeline={async () => {
+              await handleDiscoverBatch({ count: 1 });
+            }}
             onTriggerAutopilotModal={() => setIsAutopilotModalOpen(true)}
             onOpenAgentGuide={() => setIsAgentGuideOpen(true)}
             onConnectInstagram={handleInstagramConnect}

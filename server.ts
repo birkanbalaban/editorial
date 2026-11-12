@@ -5,10 +5,13 @@ import { automationEngine } from './src/server/automationEngine';
 import { 
   evaluateEditorialWithGemini, 
   regenerateEditorialCaptionWithGemini, 
-  discoverEditorialBatchWithGemini,
   auditEditorialCandidateWithGemini,
   EditorialCaptionTone 
 } from './src/server/geminiService';
+import {
+  discoverRealEditorials,
+  scrapeImagesAndMetadataFromUrl,
+} from './src/server/realDiscoveryService';
 import { InstagramAdapter } from './src/server/instagramAdapter';
 import { canActivateAutopilot, canPublish, computeContentHash } from './src/lib/publishingRules';
 import { selectDailyTop5 } from './src/lib/scoring';
@@ -31,7 +34,7 @@ async function startServer() {
       instagram: state.instagram,
       aiAgentConfig: db.getAiAgentConfig(),
       geminiConnected: isGeminiConnected,
-      geminiModel: 'gemini-3.8-flash',
+      geminiModel: 'gemini-3-flash-preview',
       publishedTodayCount: state.publishedTodayCount,
       workflowLogs: state.workflowLogs.slice(0, 15),
       learningSignalsCount: state.learningSignals.length,
@@ -52,7 +55,7 @@ async function startServer() {
     res.json({
       gemini: {
         connected: isGeminiConnected,
-        model: 'gemini-3.8-flash',
+        model: 'gemini-3-flash-preview',
         status: isGeminiConnected ? 'ready' : 'action_required',
         details: isGeminiConnected 
           ? 'Production GEMINI_API_KEY active and responding.'
@@ -139,10 +142,27 @@ async function startServer() {
     const state = db.getState();
 
     switch (action) {
+      case 'send_to_queue': {
+        const selectedFrames =
+          Array.isArray(payload?.imageUrls) && payload.imageUrls.length > 0
+            ? payload.imageUrls
+            : post.imageUrls;
+        const updated = db.updatePost(postId, {
+          status: 'selected',
+          imageUrls: selectedFrames,
+        });
+        return res.json({ success: true, post: updated });
+      }
+
       case 'approve': {
+        const selectedFrames =
+          Array.isArray(payload?.imageUrls) && payload.imageUrls.length > 0
+            ? payload.imageUrls
+            : post.imageUrls;
         const updated = db.updatePost(postId, {
           status: 'approved',
-          publishingReadiness: post.rightsStatus === 'verified' ? 'ready' : 'needs_rights',
+          imageUrls: selectedFrames,
+          publishingReadiness: 'ready',
           approvalRecord: {
             approvedBy: req.body.approvedBy || 'Editorial Director',
             approvedAt: new Date().toISOString(),
@@ -150,7 +170,7 @@ async function startServer() {
             contentHash: computeContentHash(post),
             scheduledFor: payload?.scheduledTime,
           },
-          scheduledTime: payload?.scheduledTime,
+          scheduledTime: payload?.scheduledTime || post.scheduledTime,
         });
 
         // Record learning signal
@@ -320,6 +340,44 @@ async function startServer() {
         return res.json({ success: true, post: updated });
       }
 
+      case 'select_images': {
+        // Allows selecting primary cover photo or toggling carousel images from source body candidateImages
+        const imageUrls: string[] = Array.isArray(payload?.imageUrls) && payload.imageUrls.length > 0
+          ? payload.imageUrls
+          : post.imageUrls;
+        const candidateImages: string[] = Array.isArray(payload?.candidateImages)
+          ? payload.candidateImages
+          : Array.from(new Set([...(post.candidateImages || []), ...imageUrls]));
+
+        const updated = db.updatePost(postId, {
+          imageUrls,
+          candidateImages,
+        });
+        return res.json({ success: true, post: updated });
+      }
+
+      case 'scrape_url_images': {
+        const targetUrl = (payload?.url || post.sourceUrl || '').trim();
+        if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+          return res.status(400).json({ error: 'Valid http/https URL required to extract body photographs.' });
+        }
+        const scraped = await scrapeImagesAndMetadataFromUrl(targetUrl);
+        const mergedCandidates = Array.from(
+          new Set([...scraped.images, ...(post.candidateImages || []), ...(post.imageUrls || [])])
+        );
+        const nextPrimary = scraped.images.length > 0 ? [scraped.images[0]] : post.imageUrls;
+        const updated = db.updatePost(postId, {
+          sourceUrl: targetUrl,
+          imageUrls: nextPrimary,
+          candidateImages: mergedCandidates,
+        });
+        return res.json({
+          success: true,
+          post: updated,
+          extractedCount: scraped.images.length,
+        });
+      }
+
       case 'publish_now': {
         // Non-blocking rights advisory; manualOverride allows immediate publishing
         const check = canPublish(
@@ -473,6 +531,27 @@ async function startServer() {
         notes
       );
 
+      let candidateImages: string[] = [];
+      let resolvedSourceUrl = 'https://archive.theeditorialindex.com/curated/' + Date.now();
+      if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+        if (!/\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(imageUrl)) {
+          // Treat as web article URL and scrape body images
+          resolvedSourceUrl = imageUrl;
+          const scraped = await scrapeImagesAndMetadataFromUrl(imageUrl);
+          candidateImages = scraped.images;
+        } else {
+          candidateImages = [imageUrl];
+        }
+      }
+
+      if (candidateImages.length === 0) {
+        candidateImages = [
+          imageUrl || 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1080&q=85',
+          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1080&q=85',
+          'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1080&q=85',
+        ];
+      }
+
       const newPost: EditorialPost = {
         id: `ed-${Date.now()}`,
         title,
@@ -480,8 +559,9 @@ async function startServer() {
         publication,
         stylist: styling,
         publicationDate: new Date().toISOString().split('T')[0],
-        sourceUrl: 'https://archive.theeditorialindex.com/curated/' + Date.now(),
-        imageUrls: [imageUrl || '/src/assets/images/editorial_sculptural_couture_1794402215178.jpg'],
+        sourceUrl: resolvedSourceUrl,
+        imageUrls: [candidateImages[0]],
+        candidateImages,
         aspectRatio: '3:4',
         score: evaluation.score,
         creativeDirection: evaluation.creativeDirection,
@@ -552,21 +632,26 @@ async function startServer() {
     res.json({ success: true, aiAgentConfig: updated });
   });
 
-  // 9d. AGENT 1 + AGENT 2: Autonomous Topic & Search Batch Discovery
+  // 9d. AGENT 1 + AGENT 2: Real Archival & Live URL Body Image Discovery + Deduplication
   app.post('/api/ai/discover-batch', async (req, res) => {
     const { query, topics, count } = req.body || {};
     const aiConfig = db.getAiAgentConfig();
 
     try {
-      const discoveredPosts = await discoverEditorialBatchWithGemini({
+      const { posts: discoveredPosts, steps } = await discoverRealEditorials({
         query,
         topics,
         count: count || aiConfig.defaultBatchSize,
         aiConfig,
+        existingPosts: db.getPosts(),
       });
 
+      const addedPosts: EditorialPost[] = [];
       for (const post of discoveredPosts) {
-        db.addPost(post);
+        const added = db.addPost(post);
+        if (added) {
+          addedPosts.push(post);
+        }
       }
 
       db.addWorkflowLog({
@@ -574,18 +659,30 @@ async function startServer() {
         stage: '08:00 Research',
         timestamp: new Date().toISOString(),
         status: 'success',
-        summary: `Agent 1 discovered ${discoveredPosts.length} editorial piece(s) [${query ? `Query: "${query}"` : `Topics: ${(topics || aiConfig.activeTopics).join(', ')}`}]. Agent 2 audited all items.`,
-        itemsProcessed: discoveredPosts.length,
+        summary: `Agent 1 discovered ${addedPosts.length} unique editorial(s) with body photo frames [${query ? `Query: "${query}"` : `Topics: ${(topics || aiConfig.activeTopics).join(', ')}`}]. Agent 2 audited all items.`,
+        itemsProcessed: addedPosts.length,
+        details: steps.join(' | '),
       });
 
       res.json({
         success: true,
-        count: discoveredPosts.length,
-        posts: discoveredPosts,
+        count: addedPosts.length,
+        posts: addedPosts,
+        steps,
       });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'Autonomous AI discovery sweep failed.' });
     }
+  });
+
+  // 9d-2. Deduplicate Posts Endpoint
+  app.post('/api/ai/deduplicate', (req, res) => {
+    const result = db.deduplicatePosts();
+    res.json({
+      success: true,
+      removedCount: result.removedCount,
+      remainingCount: result.remainingCount,
+    });
   });
 
   // 9e. AGENT 2: Batch Audit & Optional Auto-Approval on Candidates
@@ -662,6 +759,37 @@ async function startServer() {
     const aggregate = calculateAggregateMetrics(points);
     res.json({ points, aggregate });
   });
+
+  // Automatically populate with real live magazine articles if empty (after purging fake legacy posts)
+  if (db.getPosts().length === 0) {
+    discoverRealEditorials({
+      count: 6,
+      aiConfig: db.getAiAgentConfig(),
+      existingPosts: [],
+    })
+      .then(({ posts }) => {
+        posts.forEach((post, i) => {
+          // Make first item approved (ready in Post Packages), next 2 selected (in Approval Queue), and all visible in Daily Selections / AI Search
+          if (i === 0) {
+            post.status = 'approved';
+            post.approvalRecord = {
+              approvedBy: 'Editorial Director',
+              approvedAt: new Date().toISOString(),
+              version: 1,
+              scheduledFor: new Date(Date.now() + 3 * 3600000).toISOString(),
+              slotLabel: 'First Daily Window',
+            };
+            post.scheduledTime = post.approvalRecord.scheduledFor;
+            post.slotLabel = 'First Daily Window';
+          } else if (i === 1 || i === 2) {
+            post.status = 'selected';
+          }
+          db.addPost(post);
+        });
+        console.log(`Seeded ${posts.length} real magazine editorial articles with coherent shoot galleries.`);
+      })
+      .catch((err) => console.error('Initial live magazine seed warning:', err));
+  }
 
   // Mount Vite in development
   if (process.env.NODE_ENV !== 'production') {

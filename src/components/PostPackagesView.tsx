@@ -18,7 +18,11 @@ import {
   X,
   Save,
   Trash2,
-  Tag
+  Tag,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
+  ExternalLink
 } from 'lucide-react';
 
 interface PostPackagesViewProps {
@@ -94,6 +98,10 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
   const [selectedScheduleLabel, setSelectedScheduleLabel] = useState('');
   const [scheduleSavedToast, setScheduleSavedToast] = useState(false);
 
+  // Carousel Frame Studio State
+  const [activeCarouselSlide, setActiveCarouselSlide] = useState<number>(0);
+  const [newPhotoUrlInput, setNewPhotoUrlInput] = useState<string>('');
+
   const selectedPost = posts.find(p => p.id === selectedPostId) || posts[0];
 
   useEffect(() => {
@@ -103,8 +111,75 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
       setSelectedScheduleDate(toLocalDateStr(selectedPost.scheduledTime));
       setSelectedScheduleTime(selectedPost.scheduledTime ? toLocalTimeStr(selectedPost.scheduledTime) : '14:00');
       setSelectedScheduleLabel(selectedPost.slotLabel || selectedPost.approvalRecord?.slotLabel || '');
+      setActiveCarouselSlide(0);
     }
   }, [selectedPost?.id, selectedPost?.caption, selectedPost?.scheduledTime, selectedPost?.slotLabel]);
+
+  // Carousel Frame Manipulation Handlers
+  const handleMoveCarouselFrame = async (index: number, direction: -1 | 1) => {
+    if (!selectedPost || !onPostAction) return;
+    const current = [...(selectedPost.imageUrls || [])];
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= current.length) return;
+    const temp = current[index];
+    current[index] = current[targetIdx];
+    current[targetIdx] = temp;
+    setActiveCarouselSlide(targetIdx);
+    await onPostAction(selectedPost.id, 'select_images', {
+      imageUrls: current,
+      candidateImages: selectedPost.candidateImages,
+    });
+  };
+
+  const handleMakeCoverFrame = async (photoUrl: string) => {
+    if (!selectedPost || !onPostAction) return;
+    const rest = (selectedPost.imageUrls || []).filter((u) => u !== photoUrl);
+    const nextUrls = [photoUrl, ...rest];
+    setActiveCarouselSlide(0);
+    await onPostAction(selectedPost.id, 'select_images', {
+      imageUrls: nextUrls,
+      candidateImages: selectedPost.candidateImages,
+    });
+  };
+
+  const handleRemoveCarouselFrame = async (photoUrl: string) => {
+    if (!selectedPost || !onPostAction) return;
+    const current = selectedPost.imageUrls || [];
+    if (current.length <= 1) return; // Keep at least 1 photo
+    const nextUrls = current.filter((u) => u !== photoUrl);
+    setActiveCarouselSlide((prev) => Math.min(prev, Math.max(0, nextUrls.length - 1)));
+    await onPostAction(selectedPost.id, 'select_images', {
+      imageUrls: nextUrls,
+      candidateImages: selectedPost.candidateImages,
+    });
+  };
+
+  const handleAddShootFrameToPost = async (photoUrl: string) => {
+    if (!selectedPost || !onPostAction) return;
+    const current = selectedPost.imageUrls || [];
+    if (current.includes(photoUrl)) return;
+    const nextUrls = [...current, photoUrl];
+    setActiveCarouselSlide(nextUrls.length - 1);
+    await onPostAction(selectedPost.id, 'select_images', {
+      imageUrls: nextUrls,
+      candidateImages: selectedPost.candidateImages,
+    });
+  };
+
+  const handleAddCustomPhotoToPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPost || !onPostAction) return;
+    const trimmed = newPhotoUrlInput.trim();
+    if (!trimmed.startsWith('http')) return;
+    const nextUrls = Array.from(new Set([...(selectedPost.imageUrls || []), trimmed]));
+    const nextCandidates = Array.from(new Set([...(selectedPost.candidateImages || []), trimmed]));
+    setNewPhotoUrlInput('');
+    setActiveCarouselSlide(nextUrls.length - 1);
+    await onPostAction(selectedPost.id, 'select_images', {
+      imageUrls: nextUrls,
+      candidateImages: nextCandidates,
+    });
+  };
 
   // Filter & sort scheduled and approved posts in chronological queue
   const queuePosts = useMemo(() => {
@@ -812,29 +887,43 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
           </div>
         </div>
 
-        {/* Center: Simulated Feed Presentation (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col items-center min-w-0">
-          {/* Aspect Ratio Switcher */}
-          <div className="flex items-center gap-2 mb-4 bg-[#121212] p-1 rounded border border-[#222222]">
-            <button
-              onClick={() => setActiveRatio('4:5')}
-              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider rounded transition cursor-pointer ${
-                activeRatio === '4:5' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
-              }`}
-            >
-              Feed 4:5
-            </button>
-            <button
-              onClick={() => setActiveRatio('1:1')}
-              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider rounded transition cursor-pointer ${
-                activeRatio === '1:1' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
-              }`}
-            >
-              Square 1:1
-            </button>
+        {/* Center: Simulated Feed Presentation & Multi-Photo Carousel Studio (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col items-center space-y-5 min-w-0">
+          {/* Aspect Ratio Switcher & Original Article Link */}
+          <div className="w-full flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 bg-[#121212] p-1 rounded border border-[#222222]">
+              <button
+                onClick={() => setActiveRatio('4:5')}
+                className={`px-3 py-1 text-xs font-mono uppercase tracking-wider rounded transition cursor-pointer ${
+                  activeRatio === '4:5' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
+                }`}
+              >
+                Feed 4:5
+              </button>
+              <button
+                onClick={() => setActiveRatio('1:1')}
+                className={`px-3 py-1 text-xs font-mono uppercase tracking-wider rounded transition cursor-pointer ${
+                  activeRatio === '1:1' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
+                }`}
+              >
+                Square 1:1
+              </button>
+            </div>
+
+            {selectedPost.sourceUrl && (
+              <a
+                href={selectedPost.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[#161616] hover:bg-[#222222] border border-[#2a2a2a] text-xs font-mono text-[#c5a880] hover:text-[#f4f3ef]"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Original Article ({selectedPost.publication})</span>
+              </a>
+            )}
           </div>
 
-          {/* Instagram Mobile Feed Shell */}
+          {/* Instagram Mobile Feed Shell with Interactive Carousel */}
           <div className="w-full max-w-[390px] bg-[#000000] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
             {/* Instagram Post Header */}
             <div className="px-3.5 py-3 flex items-center justify-between border-b border-[#1c1c1c]">
@@ -853,32 +942,87 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <span className="text-xs text-[#71717a]">•••</span>
             </div>
 
-            {/* Media Area (Always Unlocked) */}
-            <div 
-              className={`relative bg-[#050505] overflow-hidden flex items-center justify-center ${
-                activeRatio === '4:5' ? 'aspect-[4/5]' : 'aspect-square'
-              }`}
-            >
-              {selectedPost.imageUrls && selectedPost.imageUrls[0] ? (
-                <img
-                  src={selectedPost.imageUrls[0]}
-                  alt={selectedPost.altText}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-top"
-                />
-              ) : (
-                <div className="text-xs text-[#71717a]">Media Preview</div>
-              )}
-              <div className="absolute inset-2 border border-white/10 pointer-events-none rounded" />
-            </div>
+            {/* Media Area with Multi-Photo Carousel Navigation */}
+            {(() => {
+              const frames = selectedPost.imageUrls || [];
+              const safeIdx = Math.min(activeCarouselSlide, Math.max(0, frames.length - 1));
+              return (
+                <div 
+                  className={`relative bg-[#050505] overflow-hidden flex items-center justify-center ${
+                    activeRatio === '4:5' ? 'aspect-[4/5]' : 'aspect-square'
+                  }`}
+                >
+                  {frames.length > 0 ? (
+                    <img
+                      src={frames[safeIdx] || frames[0]}
+                      alt={selectedPost.altText}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover object-top transition-all duration-300"
+                    />
+                  ) : (
+                    <div className="text-xs text-[#71717a]">Media Preview</div>
+                  )}
 
-            {/* Simulated Action Row */}
+                  {/* Top-Right Carousel Counter Pill */}
+                  {frames.length > 1 && (
+                    <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[11px] font-mono text-[#f4f3ef]">
+                      {safeIdx + 1} / {frames.length}
+                    </div>
+                  )}
+
+                  {/* Left / Right Carousel Arrows */}
+                  {frames.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveCarouselSlide((safeIdx - 1 + frames.length) % frames.length)
+                        }
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
+                        title="Previous frame"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCarouselSlide((safeIdx + 1) % frames.length)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
+                        title="Next frame"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+
+                  <div className="absolute inset-2 border border-white/10 pointer-events-none rounded" />
+                </div>
+              );
+            })()}
+
+            {/* Simulated Action Row + Carousel Dots */}
             <div className="px-3.5 py-2.5 flex items-center justify-between text-sm text-[#f4f3ef]">
               <div className="flex items-center gap-4">
                 <span>♡</span>
                 <span>💬</span>
                 <span>↗</span>
               </div>
+
+              {/* Carousel Dots */}
+              {(selectedPost.imageUrls || []).length > 1 && (
+                <div className="flex items-center gap-1.5">
+                  {(selectedPost.imageUrls || []).map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveCarouselSlide(idx)}
+                      className={`w-1.5 h-1.5 rounded-full transition cursor-pointer ${
+                        idx === activeCarouselSlide ? 'bg-[#c5a880] scale-125' : 'bg-[#3f3f46]'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
               <span>🔖</span>
             </div>
 
@@ -894,6 +1038,168 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 {selectedPost.hashtags.join(' ')}
               </p>
             </div>
+          </div>
+
+          {/* CAROUSEL & SHOOT FRAME STUDIO: Reorder, Remove & Add Photos to This Post */}
+          <div className="w-full p-4 bg-[#121212] border border-[#222222] rounded space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e1e1e] pb-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono uppercase text-[#c5a880]">
+                <Layers className="w-3.5 h-3.5" />
+                <span>
+                  Carousel & Frame Studio ({(selectedPost.imageUrls || []).length} Selected Photos)
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-[#8e8d8a]">
+                Reorder (←/→), Make Cover (#1), Remove (×), or Add
+              </span>
+            </div>
+
+            {/* 1. Selected Carousel Frames (Reorderable & Removable) */}
+            <div className="space-y-2">
+              <span className="block text-[10px] font-mono uppercase text-[#f4f3ef]">
+                1. Active Post Frames (Published in This Order):
+              </span>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                {(selectedPost.imageUrls || []).map((imgUrl, idx) => {
+                  const isActivePreview = activeCarouselSlide === idx;
+                  const totalSelected = (selectedPost.imageUrls || []).length;
+
+                  return (
+                    <div
+                      key={`${imgUrl}-${idx}`}
+                      className={`relative aspect-[3/4] rounded overflow-hidden border transition ${
+                        isActivePreview
+                          ? 'border-[#c5a880] ring-2 ring-[#c5a880]/40'
+                          : 'border-[#333333]'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActiveCarouselSlide(idx)}
+                        className="w-full h-full block cursor-pointer"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Selected frame ${idx + 1}`}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-top"
+                        />
+                      </button>
+
+                      {/* Frame Number Badge */}
+                      <span
+                        className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase ${
+                          idx === 0
+                            ? 'bg-[#c5a880] text-[#0a0a0a] font-bold'
+                            : 'bg-[#0a0a0a]/85 text-[#f4f3ef]'
+                        }`}
+                      >
+                        {idx === 0 ? '#1 Cover' : `#${idx + 1}`}
+                      </span>
+
+                      {/* Remove Frame Button */}
+                      {totalSelected > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCarouselFrame(imgUrl)}
+                          className="absolute top-1 right-1 p-1 rounded bg-[#0a0a0a]/85 hover:bg-[#ef4444] text-[#f4f3ef] cursor-pointer"
+                          title="Remove this photo from post"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+
+                      {/* Reorder & Make Cover Controls */}
+                      <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between gap-1 bg-[#0a0a0a]/90 px-1 py-0.5 rounded">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMoveCarouselFrame(idx, -1)}
+                          className="text-[10px] font-mono text-[#d4d4d8] hover:text-[#c5a880] disabled:opacity-30 cursor-pointer px-1"
+                          title="Move left"
+                        >
+                          ←
+                        </button>
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMakeCoverFrame(imgUrl)}
+                            className="text-[8px] font-mono uppercase text-[#c5a880] hover:underline cursor-pointer"
+                            title="Make #1 Cover"
+                          >
+                            #1
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={idx === totalSelected - 1}
+                          onClick={() => handleMoveCarouselFrame(idx, 1)}
+                          className="text-[10px] font-mono text-[#d4d4d8] hover:text-[#c5a880] disabled:opacity-30 cursor-pointer px-1"
+                          title="Move right"
+                        >
+                          →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Remaining Photographs from This Article's Shoot */}
+            {(() => {
+              const unselectedShootPhotos = (selectedPost.candidateImages || []).filter(
+                (u) => !(selectedPost.imageUrls || []).includes(u)
+              );
+              if (unselectedShootPhotos.length === 0) return null;
+
+              return (
+                <div className="pt-3 border-t border-[#1e1e1e] space-y-2">
+                  <span className="block text-[10px] font-mono uppercase text-[#8e8d8a]">
+                    2. Other Photos from This Article's Shoot (Click to Add to Post):
+                  </span>
+                  <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                    {unselectedShootPhotos.map((imgUrl, idx) => (
+                      <button
+                        key={`${imgUrl}-${idx}`}
+                        type="button"
+                        onClick={() => handleAddShootFrameToPost(imgUrl)}
+                        className="group relative aspect-[3/4] rounded overflow-hidden border border-[#262626] opacity-70 hover:opacity-100 hover:border-[#c5a880] transition cursor-pointer"
+                        title="Add this shoot photograph to the Carousel"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Available shoot frame ${idx + 1}`}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-top"
+                        />
+                        <span className="absolute bottom-1 left-1 right-1 bg-[#0a0a0a]/90 text-[#c5a880] text-[9px] font-mono uppercase py-0.5 rounded text-center">
+                          + Add Frame
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* 3. Add Custom Image URL to This Post */}
+            <form onSubmit={handleAddCustomPhotoToPost} className="pt-2 border-t border-[#1e1e1e] flex items-center gap-2">
+              <input
+                type="text"
+                value={newPhotoUrlInput}
+                onChange={(e) => setNewPhotoUrlInput(e.target.value)}
+                placeholder="Paste additional image URL (https://...) to add to this post..."
+                className="flex-1 px-2.5 py-1.5 bg-[#0a0a0a] border border-[#262626] rounded text-xs font-mono text-[#f4f3ef] focus:outline-none focus:border-[#c5a880]"
+              />
+              <button
+                type="submit"
+                className="px-3 py-1.5 bg-[#1e1c18] hover:bg-[#28241d] border border-[#c5a880]/40 rounded text-xs font-mono text-[#c5a880] cursor-pointer flex items-center gap-1 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Photo</span>
+              </button>
+            </form>
           </div>
         </div>
 

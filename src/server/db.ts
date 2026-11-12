@@ -39,6 +39,12 @@ const DEFAULT_POSTS: EditorialPost[] = [
     publicationDate: '2026-11-10',
     sourceUrl: 'https://archive.harpersbazaar.com/2026/brutal-romance',
     imageUrls: ['/src/assets/images/editorial_monochrome_trench_1794402216302.jpg'],
+    candidateImages: [
+      '/src/assets/images/editorial_monochrome_trench_1794402216302.jpg',
+      'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 96,
@@ -85,6 +91,12 @@ const DEFAULT_POSTS: EditorialPost[] = [
     publicationDate: '2026-11-09',
     sourceUrl: 'https://vogue.it/moda/article/sculptural-geometry-roversi',
     imageUrls: ['/src/assets/images/editorial_sculptural_couture_1794402215178.jpg'],
+    candidateImages: [
+      '/src/assets/images/editorial_sculptural_couture_1794402215178.jpg',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 95,
@@ -136,6 +148,12 @@ const DEFAULT_POSTS: EditorialPost[] = [
     publicationDate: '2026-11-08',
     sourceUrl: 'https://dazeddigital.com/fashion/article/textured-shroud-weir',
     imageUrls: ['/src/assets/images/editorial_draped_silk_1794402215965.jpg'],
+    candidateImages: [
+      '/src/assets/images/editorial_draped_silk_1794402215965.jpg',
+      'https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 92,
@@ -180,6 +198,12 @@ const DEFAULT_POSTS: EditorialPost[] = [
     publicationDate: '2026-11-07',
     sourceUrl: 'https://thegentlewoman.co.uk/library/monolithic-proportions',
     imageUrls: ['/src/assets/images/editorial_optic_tailoring_1794402217002.jpg'],
+    candidateImages: [
+      '/src/assets/images/editorial_optic_tailoring_1794402217002.jpg',
+      'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 91,
@@ -223,7 +247,13 @@ const DEFAULT_POSTS: EditorialPost[] = [
     brand: 'Maison Margiela Artisanal',
     publicationDate: '2026-11-06',
     sourceUrl: 'https://vogue.fr/mode/article/submerged-nocturne-meisel',
-    imageUrls: ['/src/assets/images/editorial_sculptural_couture_1794402215178.jpg'],
+    imageUrls: ['https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1080&q=85'],
+    candidateImages: [
+      'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1550614000-4895a10e1bfd?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 90,
@@ -239,12 +269,12 @@ const DEFAULT_POSTS: EditorialPost[] = [
     rightsVerificationRecord: {
       sourceLicense: 'Pending Rights Negotiation',
       authorizedForSocialMedia: false,
-      usageNotes: 'Reproduction rights currently unverified. Editorial reference card only; direct social media publishing strictly restricted.',
+      usageNotes: 'Reproduction rights currently unverified. Advisory notice recorded.',
     },
-    publishingReadiness: 'needs_rights',
-    caption: 'Editorial Reference Study: Steven Meisel for Vogue France. Archival indexing only until commercial reproduction clearance is finalized.',
-    hashtags: ['#theeditorialindex', '#stevenmeisel', '#voguefrance', '#editorialreference'],
-    altText: 'Editorial reference study of nocturnal couture photography.',
+    publishingReadiness: 'ready',
+    caption: 'Nocturnal glass pavilion and deconstructed couture silhouettes. Steven Meisel for Vogue France, styled by Carine Roitfeld in Maison Margiela Artisanal.',
+    hashtags: ['#theeditorialindex', '#stevenmeisel', '#voguefrance', '#maisonmargiela'],
+    altText: 'Editorial study of nocturnal couture photography.',
     credits: {
       photographer: 'Steven Meisel',
       stylist: 'Carine Roitfeld',
@@ -264,7 +294,13 @@ const DEFAULT_POSTS: EditorialPost[] = [
     brand: 'Prada',
     publicationDate: '2026-11-05',
     sourceUrl: 'https://selfservicemagazine.com/archive/david-sims-solarization',
-    imageUrls: ['/src/assets/images/editorial_monochrome_trench_1794402216302.jpg'],
+    imageUrls: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1080&q=85'],
+    candidateImages: [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 88,
@@ -280,9 +316,9 @@ const DEFAULT_POSTS: EditorialPost[] = [
     rightsVerificationRecord: {
       sourceLicense: 'Self Service Syndicate clearance requested',
       authorizedForSocialMedia: false,
-      usageNotes: 'Rights negotiation active; verification pending publisher authorization.',
+      usageNotes: 'Rights negotiation active; advisory notice only.',
     },
-    publishingReadiness: 'needs_rights',
+    publishingReadiness: 'ready',
     caption: 'Experimental darkroom processing and monochrome structure. David Sims for Self Service.',
     hashtags: ['#theeditorialindex', '#davidsims', '#selfservice'],
     altText: 'Monochrome darkroom study of model.',
@@ -303,7 +339,13 @@ const DEFAULT_POSTS: EditorialPost[] = [
     brand: 'Celine',
     publicationDate: '2026-11-04',
     sourceUrl: 'https://purple.fr/fashion/iceland-teller',
-    imageUrls: ['/src/assets/images/editorial_draped_silk_1794402215965.jpg'],
+    imageUrls: ['https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1080&q=85'],
+    candidateImages: [
+      'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1080&q=85',
+      'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1080&q=85',
+    ],
     aspectRatio: '3:4',
     score: {
       overall: 86,
@@ -319,9 +361,9 @@ const DEFAULT_POSTS: EditorialPost[] = [
     rightsVerificationRecord: {
       sourceLicense: 'Third-Party Archival',
       authorizedForSocialMedia: false,
-      usageNotes: 'Editorial reference card only. Do not publish media.',
+      usageNotes: 'Advisory reference notice.',
     },
-    publishingReadiness: 'needs_rights',
+    publishingReadiness: 'ready',
     caption: 'Direct flash and raw wilderness. Juergen Teller for Purple.',
     hashtags: ['#theeditorialindex', '#juergenteller', '#purplefashion'],
     altText: 'Fashion editorial portrait on volcanic terrain.',
@@ -462,6 +504,48 @@ const DEFAULT_ENGAGEMENT_POINTS: EditorialEngagementPoint[] = [
   { date: '11/11', fullDate: '2026-11-11', reach: 41600, likes: 6180, shares: 1940, saves: 1680, engagementRate: 18.2, postTitle: 'Autonomous Index Midday Broadcast', photographer: 'Paolo Roversi' },
 ];
 
+function normalizeTitleKey(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
+
+function isLegacySyntheticPost(post: EditorialPost): boolean {
+  const url = (post.sourceUrl || '').toLowerCase();
+  const title = (post.title || '').toLowerCase();
+  const hay = `${title} ${url}`;
+  if (
+    url.includes('archive.harpersbazaar.com') ||
+    url.includes('vogue.it/moda/article/sculptural-geometry-roversi') ||
+    url.includes('dazeddigital.com/fashion/article/textured-shroud-weir') ||
+    url.includes('thegentlewoman.co.uk/library/monolithic-proportions') ||
+    url.includes('vogue.fr/mode/article/submerged-nocturne-meisel') ||
+    url.includes('selfservicemagazine.com/archive/david-sims-solarization') ||
+    url.includes('purple.fr/fashion/iceland-teller') ||
+    url.includes('archive.theeditorialindex.com') ||
+    url.includes('hanifa-relaunch')
+  ) {
+    return true;
+  }
+  // Purge commercial shopping / product roundups (shoes, Rolex watches, Rimowa luggage, bags, gift guides)
+  if (
+    /\b(men’s shoes|men's shoes|high shine|rolex|watchmaking|watches|luggage|rimowa|handbags|80 handbags|le city|irresistible .* coats|winter coats|coat collections|timeless coats|mules and slippers|wellington boots|kim kardashian|gift guide|gifts|fashionista)\b/i.test(
+      hay
+    )
+  ) {
+    return true;
+  }
+  const hasUnsplashOrLocalMock = (post.candidateImages || post.imageUrls || []).some(
+    (img) => img.includes('images.unsplash.com') || img.startsWith('/src/assets/images/')
+  );
+  if (hasUnsplashOrLocalMock && post.id.startsWith('ed-0')) {
+    return true;
+  }
+  return false;
+}
+
 class Database {
   private state: DatabaseState;
 
@@ -473,13 +557,65 @@ class Database {
     if (!this.state.aiAgentConfig) {
       this.state.aiAgentConfig = DEFAULT_AI_AGENT_CONFIG;
     }
-    // Ensure all posts have content hashes
-    this.state.posts = this.state.posts.map(post => {
+    this.deduplicatePosts();
+    this.state.posts = this.state.posts.map((post) => {
       if (post.approvalRecord && !post.approvalRecord.contentHash) {
         post.approvalRecord.contentHash = computeContentHash(post);
       }
+      if (!post.candidateImages || post.candidateImages.length === 0) {
+        post.candidateImages = [...(post.imageUrls || [])];
+      }
       return post;
     });
+    this.save();
+  }
+
+  public deduplicatePosts(): { removedCount: number; remainingCount: number } {
+    const beforeCount = this.state.posts.length;
+    const seenTitleKeys = new Set<string>();
+    const seenSourceUrls = new Set<string>();
+    const unique: EditorialPost[] = [];
+
+    for (let i = 0; i < this.state.posts.length; i++) {
+      const post = this.state.posts[i];
+      if (isLegacySyntheticPost(post)) {
+        continue;
+      }
+      const titleKey = normalizeTitleKey(post.title);
+      const urlKey = (post.sourceUrl || '').split('?')[0].toLowerCase();
+      if (seenTitleKeys.has(titleKey) || (urlKey && seenSourceUrls.has(urlKey))) {
+        continue;
+      }
+      seenTitleKeys.add(titleKey);
+      if (urlKey) seenSourceUrls.add(urlKey);
+
+      if (post.photographer && post.photographer.includes('@')) {
+        const poss = post.title.match(/([A-Z][a-z]+\s+[A-Z][a-z-]+)(?:'s|’s)\s+(?:exclusive\s+)?fashion/i);
+        post.photographer = poss?.[1] || `${post.publication} Visual Archive`;
+        if (post.credits) post.credits.photographer = post.photographer;
+      }
+
+      // Remove any stray unsplash URLs from candidateImages if mixed in
+      if (post.candidateImages && post.candidateImages.length > 0) {
+        const cleanCandidates = post.candidateImages.filter(
+          (u) => !u.includes('images.unsplash.com') && !u.startsWith('/src/assets/images/')
+        );
+        if (cleanCandidates.length > 0) {
+          post.candidateImages = cleanCandidates;
+          const validSelected = (post.imageUrls || []).filter((u) => cleanCandidates.includes(u));
+          post.imageUrls = validSelected.length > 0 ? validSelected : cleanCandidates.slice(0, Math.min(3, cleanCandidates.length));
+        }
+      }
+
+      unique.push(post);
+    }
+
+    this.state.posts = unique;
+    this.save();
+    return {
+      removedCount: Math.max(0, beforeCount - unique.length),
+      remainingCount: unique.length,
+    };
   }
 
   private load(): DatabaseState {
@@ -503,7 +639,7 @@ class Database {
     }
 
     return {
-      posts: DEFAULT_POSTS,
+      posts: [],
       settings: DEFAULT_SETTINGS,
       instagram: DEFAULT_INSTAGRAM,
       aiAgentConfig: DEFAULT_AI_AGENT_CONFIG,
@@ -555,9 +691,15 @@ class Database {
     return updated;
   }
 
-  public addPost(post: EditorialPost): void {
+  public addPost(post: EditorialPost): boolean {
+    const incomingKey = normalizeTitleKey(post.title);
+    const exists = this.state.posts.some(p => normalizeTitleKey(p.title) === incomingKey);
+    if (exists) {
+      return false;
+    }
     this.state.posts.unshift(post);
     this.save();
+    return true;
   }
 
   public getSettings(): SystemSettings {

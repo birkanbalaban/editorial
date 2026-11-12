@@ -4,14 +4,17 @@ import {
   Check, 
   X, 
   AlertTriangle, 
-  ShieldCheck, 
   Send, 
   CheckSquare, 
   Square,
   Edit3,
   Bot,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Layers,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { computeContentHash, needsReapproval } from '../lib/publishingRules';
 
@@ -35,8 +38,9 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
   isProcessingAction,
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [activeSlideIndex, setActiveSlideIndex] = useState<Record<string, number>>({});
 
-  // Filter posts that are selected, approved, or scheduled
+  // Filter posts that are selected (sent to queue), approved, or scheduled
   const queuePosts = posts.filter(
     (p) => p.status === 'selected' || p.status === 'approved' || p.status === 'scheduled'
   );
@@ -62,6 +66,32 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
     setSelectedIds(new Set());
   };
 
+  // Toggle shoot photo in/out of the post's Carousel inside Approval Queue
+  const handleToggleFrame = async (post: EditorialPost, photoUrl: string) => {
+    const current = post.imageUrls || [];
+    const exists = current.includes(photoUrl);
+    let nextUrls: string[];
+    if (exists) {
+      if (current.length <= 1) return;
+      nextUrls = current.filter((u) => u !== photoUrl);
+    } else {
+      nextUrls = [...current, photoUrl];
+    }
+    await onAction(post.id, 'select_images', {
+      imageUrls: nextUrls,
+      candidateImages: post.candidateImages,
+    });
+  };
+
+  const handleMakeCover = async (post: EditorialPost, photoUrl: string) => {
+    const rest = (post.imageUrls || []).filter((u) => u !== photoUrl);
+    setActiveSlideIndex((prev) => ({ ...prev, [post.id]: 0 }));
+    await onAction(post.id, 'select_images', {
+      imageUrls: [photoUrl, ...rest],
+      candidateImages: post.candidateImages,
+    });
+  };
+
   const threshold = aiConfig?.minApprovalScore || 89;
 
   return (
@@ -72,13 +102,13 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
           <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-[#c5a880] mb-1 font-mono">
             <span>Stage 2 · Editorial Review Queue</span>
             <span>·</span>
-            <span>Agent 2 Auditor & Sign-Off Desk</span>
+            <span>Multi-Photo Carousel Review & Sign-Off</span>
           </div>
           <h1 className="font-editorial text-3xl md:text-4xl text-[#f4f3ef] font-normal tracking-tight">
-            Approval Queue & AI Quality Audit
+            Approval Queue & Carousel Sign-Off
           </h1>
           <p className="text-sm text-[#8e8d8a] mt-1 max-w-2xl font-sans">
-            Review candidates selected from Daily Selection or AI Search Engine. Agent 2 evaluates quality against your threshold while leaving full publishing and approval unlocked regardless of rights status.
+            Review the multi-photo Carousel packages sent from Daily Selection or AI Search Engine. Verify or adjust the selected shoot frames below and click Approve to move them to Post Packages.
           </p>
         </div>
 
@@ -161,10 +191,12 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
       {/* Visual Editorial Gallery */}
       {queuePosts.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-[#222222] rounded bg-[#121212]">
-          <p className="text-sm text-[#8e8d8a]">No pending posts awaiting editorial approval.</p>
+          <p className="text-sm text-[#8e8d8a]">
+            No posts in the Approval Queue yet. Select shoot photographs in Daily Selections or AI Search Engine and click "Send to Approval Queue".
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {queuePosts.map((post) => {
             const isSelected = selectedIds.has(post.id);
             const isApproved = post.status === 'approved' || post.status === 'scheduled';
@@ -174,6 +206,16 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
               : false;
             const passesThreshold = post.score.overall >= threshold;
 
+            const selectedFrames = post.imageUrls || [];
+            const shootGallery =
+              post.candidateImages && post.candidateImages.length > 0
+                ? post.candidateImages
+                : selectedFrames;
+            const currentSlide = Math.min(
+              activeSlideIndex[post.id] || 0,
+              Math.max(0, selectedFrames.length - 1)
+            );
+
             return (
               <article
                 key={post.id}
@@ -181,67 +223,196 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                   isSelected ? 'border-[#c5a880] ring-1 ring-[#c5a880]' : 'border-[#222222] hover:border-[#333333]'
                 }`}
               >
-                {/* Media Preview & Checkbox */}
-                <div className="relative aspect-[3/4] bg-[#0a0a0a] overflow-hidden">
-                  {post.imageUrls && post.imageUrls[0] ? (
-                    <img
-                      src={post.imageUrls[0]}
-                      alt={post.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-top"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-[#71717a]">
-                      No Image Preview
-                    </div>
-                  )}
-
-                  {/* Select Checkbox Overlay */}
-                  <button
-                    onClick={() => toggleSelect(post.id)}
-                    className="absolute top-3 left-3 bg-[#0a0a0a]/80 backdrop-blur-md p-1.5 rounded border border-[#333333] text-[#f4f3ef] cursor-pointer hover:bg-[#1a1a1a]"
-                  >
-                    {isSelected ? (
-                      <CheckSquare className="w-4 h-4 text-[#c5a880]" />
+                <div>
+                  {/* Media Preview & Carousel Slider */}
+                  <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden border-b border-[#222222]">
+                    {selectedFrames.length > 0 ? (
+                      <img
+                        src={selectedFrames[currentSlide] || selectedFrames[0]}
+                        alt={post.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover object-top"
+                      />
                     ) : (
-                      <Square className="w-4 h-4 text-[#a1a1aa]" />
+                      <div className="w-full h-full flex items-center justify-center text-xs text-[#71717a]">
+                        No Image Preview
+                      </div>
                     )}
-                  </button>
 
-                  {/* Score & Status Overlay */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                    <div className="bg-[#0a0a0a]/85 backdrop-blur-md px-2 py-1 rounded border border-[#262626] text-[11px] font-mono text-[#c5a880] font-semibold">
-                      {post.score.overall}/100
+                    {/* Carousel Prev / Next Arrows */}
+                    {selectedFrames.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveSlideIndex((prev) => ({
+                              ...prev,
+                              [post.id]:
+                                (currentSlide - 1 + selectedFrames.length) %
+                                selectedFrames.length,
+                            }))
+                          }
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveSlideIndex((prev) => ({
+                              ...prev,
+                              [post.id]: (currentSlide + 1) % selectedFrames.length,
+                            }))
+                          }
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Select Checkbox Overlay */}
+                    <button
+                      onClick={() => toggleSelect(post.id)}
+                      className="absolute top-3 left-3 bg-[#0a0a0a]/85 backdrop-blur-md p-1.5 rounded border border-[#333333] text-[#f4f3ef] cursor-pointer hover:bg-[#1a1a1a]"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4 text-[#c5a880]" />
+                      ) : (
+                        <Square className="w-4 h-4 text-[#a1a1aa]" />
+                      )}
+                    </button>
+
+                    {/* Score, Carousel Frame Count & Status Overlay */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                      <div className="bg-[#0a0a0a]/90 backdrop-blur-md px-2 py-1 rounded border border-[#c5a880]/40 text-[11px] font-mono text-[#c5a880] flex items-center gap-1">
+                        <Layers className="w-3 h-3" />
+                        <span>
+                          Frame {currentSlide + 1}/{selectedFrames.length}
+                        </span>
+                      </div>
+                      <div className="bg-[#0a0a0a]/90 backdrop-blur-md px-2 py-1 rounded border border-[#262626] text-[11px] font-mono text-[#f4f3ef] font-semibold">
+                        {post.score.overall}/100
+                      </div>
+                      <div
+                        className={`px-2.5 py-1 rounded border text-[11px] font-mono uppercase tracking-wider ${
+                          isApproved
+                            ? 'bg-[#1a2618] border-[#a3e635] text-[#a3e635]'
+                            : 'bg-[#0a0a0a]/90 border-[#262626] text-[#f4f3ef]'
+                        }`}
+                      >
+                        {post.status === 'selected' ? 'Pending Approval' : post.status}
+                      </div>
                     </div>
-                    <div className="bg-[#0a0a0a]/85 backdrop-blur-md px-2.5 py-1 rounded border border-[#262626] text-[11px] font-mono uppercase tracking-wider text-[#f4f3ef]">
-                      {post.status}
-                    </div>
+
+                    {/* Warning: Material Change Detected */}
+                    {hasMaterialChange && (
+                      <div className="absolute bottom-3 left-3 right-3 bg-[#450a0a]/90 backdrop-blur-md border border-[#7f1d1d] px-3 py-1.5 rounded flex items-center gap-2 text-xs text-[#fca5a5]">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
+                        <span className="text-[11px] font-sans">
+                          Content altered post-approval. Renewed sign-off recommended.
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Warning: Material Change Detected */}
-                  {hasMaterialChange && (
-                    <div className="absolute bottom-3 left-3 right-3 bg-[#450a0a]/90 backdrop-blur-md border border-[#7f1d1d] px-3 py-1.5 rounded flex items-center gap-2 text-xs text-[#fca5a5]">
-                      <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                      <span className="text-[11px] font-sans">
-                        Content altered post-approval. Renewed sign-off recommended.
+                  {/* SELECTED CAROUSEL FRAMES & SHOOT GALLERY STRIP */}
+                  <div className="p-3.5 bg-[#0e0e0e] border-b border-[#1e1e1e] space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-mono uppercase">
+                      <span className="text-[#c5a880]">
+                        Carousel Package ({selectedFrames.length} Selected / {shootGallery.length} in Shoot)
                       </span>
+                      <span className="text-[#8e8d8a]">Click to add/remove frames</span>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                      {shootGallery.map((imgUrl, idx) => {
+                        const orderIdx = selectedFrames.indexOf(imgUrl);
+                        const isFrameSelected = orderIdx !== -1;
+
+                        return (
+                          <div
+                            key={`${imgUrl}-${idx}`}
+                            className={`relative aspect-[3/4] rounded overflow-hidden border transition ${
+                              orderIdx === 0
+                                ? 'border-[#c5a880] ring-2 ring-[#c5a880]/40 opacity-100'
+                                : isFrameSelected
+                                ? 'border-[#a3e635] opacity-100'
+                                : 'border-[#262626] opacity-50 hover:opacity-90'
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleToggleFrame(post, imgUrl)}
+                              className="w-full h-full block cursor-pointer"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Frame ${idx + 1}`}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </button>
+                            <span
+                              className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-mono uppercase pointer-events-none ${
+                                orderIdx === 0
+                                  ? 'bg-[#c5a880] text-[#0a0a0a] font-bold'
+                                  : isFrameSelected
+                                  ? 'bg-[#a3e635] text-[#0a0a0a] font-bold'
+                                  : 'bg-[#0a0a0a]/80 text-[#a1a1aa]'
+                              }`}
+                            >
+                              {orderIdx === 0
+                                ? '1. Cover'
+                                : isFrameSelected
+                                ? `${orderIdx + 1}. Frame`
+                                : '+ Add'}
+                            </span>
+                            {isFrameSelected && orderIdx > 0 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMakeCover(post, imgUrl);
+                                }}
+                                className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-[#0a0a0a]/90 border border-[#c5a880]/40 text-[8px] font-mono text-[#c5a880] cursor-pointer"
+                              >
+                                Make #1
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Card Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#8e8d8a] mb-1">
-                      <span className="text-[#c5a880]">{post.publication}</span>
-                      <span>·</span>
-                      <span>{post.publicationDate}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#8e8d8a] mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#c5a880] uppercase font-semibold">{post.publication}</span>
+                        <span>·</span>
+                        <span>{post.publicationDate}</span>
+                      </div>
+                      {post.sourceUrl && (
+                        <a
+                          href={post.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#c5a880] hover:text-[#f4f3ef] inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Verify Source</span>
+                        </a>
+                      )}
                     </div>
                     <h3 className="font-editorial text-xl text-[#f4f3ef] font-normal leading-snug mb-2">
                       {post.title}
                     </h3>
                     <p className="text-xs text-[#a1a1aa] font-sans line-clamp-1">
-                      <span className="text-[#71717a]">Photo:</span> {post.photographer}
+                      <span className="text-[#71717a]">Author / Photo:</span> {post.photographer}
                     </p>
 
                     {/* Agent 2 Audit Report Box */}
@@ -263,24 +434,6 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                         {post.aiAuditReport?.auditorNotes || post.score.rationale}
                       </p>
                     </div>
-
-                    {/* Rights Status Record (Informational Only) */}
-                    <div className="mt-2.5 py-1.5 px-2.5 bg-[#181818] rounded border border-[#222222] text-[11px] font-mono flex items-center justify-between text-[#8e8d8a]">
-                      <span>Rights Advisory:</span>
-                      <span className={post.rightsStatus === 'verified' ? 'text-[#a3e635]' : 'text-[#c5a880]'}>
-                        {post.rightsStatus.toUpperCase()} (UNLOCKED)
-                      </span>
-                    </div>
-
-                    {/* Version & Sign-off Tracking Record */}
-                    {post.approvalRecord && (
-                      <div className="mt-2 text-[10px] font-mono text-[#71717a] space-y-0.5">
-                        <div>Approved by: {post.approvalRecord.approvedBy}</div>
-                        <div>Timestamp: {new Date(post.approvalRecord.approvedAt).toLocaleString('en-GB')}</div>
-                        <div>Target Slot: {post.approvalRecord.scheduledFor || 'Pending slot'}</div>
-                        <div>Version: v{post.approvalRecord.version}</div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Actions Bar */}
@@ -291,7 +444,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                         className="px-2.5 py-1.5 text-xs text-[#8e8d8a] hover:text-[#f4f3ef] bg-[#181818] border border-[#262626] rounded transition cursor-pointer flex items-center gap-1"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
+                        <span>Edit Copy</span>
                       </button>
 
                       <button
@@ -316,12 +469,20 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       </button>
 
                       <button
-                        onClick={() => onAction(post.id, 'approve')}
+                        onClick={() =>
+                          onAction(post.id, 'approve', {
+                            imageUrls: selectedFrames,
+                          })
+                        }
                         disabled={isProcessingAction}
-                        className="px-3.5 py-1.5 bg-[#f4f3ef] text-[#0a0a0a] hover:bg-white text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1"
+                        className="px-4 py-1.5 bg-[#f4f3ef] text-[#0a0a0a] hover:bg-white text-xs font-mono font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>{isApproved && !hasMaterialChange ? 'Re-Approve' : 'Approve'}</span>
+                        <span>
+                          {isApproved && !hasMaterialChange
+                            ? `Approved (${selectedFrames.length} Frames)`
+                            : `Approve (${selectedFrames.length} Frames) → Post Packages`}
+                        </span>
                       </button>
                     </div>
                   </div>
