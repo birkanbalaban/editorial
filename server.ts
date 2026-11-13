@@ -87,7 +87,15 @@ async function startServer() {
 
   // 2. Settings & Mode Update
   app.post('/api/settings', (req, res) => {
-    const { mode, maxDailyPosts, emergencyStop, schedulePaused, notificationsEnabled, notificationChannel } = req.body;
+    const {
+      mode,
+      maxDailyPosts,
+      emergencyStop,
+      schedulePaused,
+      notificationsEnabled,
+      notificationChannel,
+      automationSchedule,
+    } = req.body;
     const currentSettings = db.getSettings();
     const igConfig = db.getInstagram();
 
@@ -106,6 +114,7 @@ async function startServer() {
       ...(typeof schedulePaused === 'boolean' ? { schedulePaused } : {}),
       ...(typeof notificationsEnabled === 'boolean' ? { notificationsEnabled } : {}),
       ...(notificationChannel ? { notificationChannel } : {}),
+      ...(Array.isArray(automationSchedule) ? { automationSchedule } : {}),
     });
 
     res.json({ success: true, settings: updated });
@@ -482,6 +491,11 @@ async function startServer() {
     const settings = db.getSettings();
     const updated = db.updateSettings({ schedulePaused: !settings.schedulePaused });
     res.json({ success: true, schedulePaused: updated.schedulePaused });
+  });
+
+  app.post('/api/automation/logs/clear', (req, res) => {
+    db.clearWorkflowLogs();
+    res.json({ success: true, workflowLogs: [] });
   });
 
   // 8. Instagram Connection Adapter

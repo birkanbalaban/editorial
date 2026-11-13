@@ -97,9 +97,17 @@ export interface EditorialPost {
   };
 }
 
+export type AutomationStageId = 'discovery' | 'curation' | 'first_slot' | 'second_slot';
+
+export interface AutomationStageConfig {
+  id: AutomationStageId;
+  time: string; // HH:mm in configured timezone
+  enabled: boolean;
+}
+
 export interface WorkflowExecutionLog {
   id: string;
-  stage: '08:00 Research' | '09:00 Evaluation' | '09:00 Editorial evaluation' | '10:00 Daily Selection' | '11:00 Post Preparation' | '14:00 First Slot' | '20:00 Second Slot' | 'Manual Run';
+  stage: string;
   timestamp: string;
   status: 'success' | 'running' | 'failed' | 'skipped_emergency_stop';
   summary: string;
@@ -140,6 +148,7 @@ export interface SystemSettings {
   notificationChannel: 'in_app' | 'webhook' | 'email';
   autopilotConfirmed: boolean;
   schedulePaused: boolean;
+  automationSchedule?: AutomationStageConfig[];
 }
 
 export interface EditorialLearningSignal {

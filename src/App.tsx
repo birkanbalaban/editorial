@@ -338,8 +338,23 @@ export default function App() {
       if (!res.ok) {
         showToast(data.error || 'Stage execution failed.', 'error');
       } else {
-        showToast(`Workflow stage "${stage}" executed.`);
+        showToast(`Workflow stage executed.`);
         await loadAllData();
+      }
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleClearWorkflowLogs = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/automation/logs/clear', { method: 'POST' });
+      if (res.ok) {
+        setWorkflowLogs([]);
+        showToast('Automation logs cleared.');
       }
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -665,9 +680,16 @@ export default function App() {
             workflowLogs={workflowLogs}
             schedulePaused={settings.schedulePaused}
             emergencyStop={settings.emergencyStop}
+            mode={settings.mode}
+            timezone={settings.timezone}
+            automationSchedule={settings.automationSchedule}
+            onUpdateSchedule={(automationSchedule) =>
+              handleUpdateSettings({ automationSchedule })
+            }
             onTogglePause={handleToggleSchedulePause}
             onToggleEmergencyStop={handleToggleEmergencyStop}
             onRunStage={handleRunStage}
+            onClearLogs={handleClearWorkflowLogs}
             isProcessing={isProcessing}
           />
         )}

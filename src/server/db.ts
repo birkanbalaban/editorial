@@ -381,6 +381,13 @@ const DEFAULT_POSTS: EditorialPost[] = [
   },
 ];
 
+const DEFAULT_AUTOMATION_SCHEDULE = [
+  { id: 'discovery' as const, time: '08:00', enabled: true },
+  { id: 'curation' as const, time: '09:30', enabled: true },
+  { id: 'first_slot' as const, time: '14:00', enabled: true },
+  { id: 'second_slot' as const, time: '20:00', enabled: true },
+];
+
 const DEFAULT_SETTINGS: SystemSettings = {
   mode: 'APPROVAL', // Default per requirements
   maxDailyPosts: 2,
@@ -390,6 +397,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   notificationChannel: 'in_app',
   autopilotConfirmed: false,
   schedulePaused: false,
+  automationSchedule: DEFAULT_AUTOMATION_SCHEDULE,
 };
 
 const DEFAULT_INSTAGRAM: InstagramAccountConfig = {
@@ -427,44 +435,7 @@ const DEFAULT_AI_AGENT_CONFIG: AiAgentConfig = {
   defaultCaptionTone: 'archival',
 };
 
-const DEFAULT_WORKFLOWS: WorkflowExecutionLog[] = [
-  {
-    id: 'wf-01',
-    stage: '08:00 Research',
-    timestamp: '2026-11-11T08:00:15+03:00',
-    status: 'success',
-    summary: 'Discovered 20 fashion editorial candidates across primary publications (Vogue, Harper\'s Bazaar UK, Dazed, The Gentlewoman).',
-    itemsProcessed: 20,
-    details: 'Duplicates filtered by canonical editorial metadata and photographer attribution.',
-  },
-  {
-    id: 'wf-02',
-    stage: '09:00 Editorial evaluation',
-    timestamp: '2026-11-11T09:00:22+03:00',
-    status: 'success',
-    summary: 'Evaluated artistic composition, chiaroscuro lighting, and cultural relevance. Ranked candidate pool.',
-    itemsProcessed: 20,
-    details: 'Scoring engine generated full weighted assessments.',
-  },
-  {
-    id: 'wf-03',
-    stage: '10:00 Daily Selection',
-    timestamp: '2026-11-11T10:00:08+03:00',
-    status: 'success',
-    summary: 'Curated top 5 daily editorial selections for review. Verified rights for 4 selections.',
-    itemsProcessed: 5,
-    details: 'Prepared draft Instagram packages for 2 rights-cleared works.',
-  },
-  {
-    id: 'wf-04',
-    stage: '11:00 Post Preparation',
-    timestamp: '2026-11-11T11:00:30+03:00',
-    status: 'success',
-    summary: 'Generated high-fashion captions, structured credits, and aspect ratio crop definitions.',
-    itemsProcessed: 2,
-    details: 'Verified photographer handles and typography tags.',
-  },
-];
+const DEFAULT_WORKFLOWS: WorkflowExecutionLog[] = [];
 
 const DEFAULT_RSS_FEEDS: RssFeedConfig[] = [
   {
@@ -609,6 +580,9 @@ class Database {
     if (!Array.isArray(this.state.excludedKeywords)) {
       this.state.excludedKeywords = DEFAULT_EXCLUDED_KEYWORDS;
     }
+    if (!Array.isArray(this.state.settings.automationSchedule) || this.state.settings.automationSchedule.length === 0) {
+      this.state.settings.automationSchedule = DEFAULT_AUTOMATION_SCHEDULE;
+    }
     this.deduplicatePosts();
     this.purgeLegacyAnalyticsAndSignals();
     this.state.posts = this.state.posts.map((post) => {
@@ -633,6 +607,13 @@ class Database {
     this.state.engagementPoints = (this.state.engagementPoints || []).filter((pt) => {
       const titleLower = (pt.postTitle || '').trim().toLowerCase();
       if (LEGACY_MOCK_ENGAGEMENT_TITLES.has(titleLower)) return false;
+      return true;
+    });
+
+    this.state.workflowLogs = (this.state.workflowLogs || []).filter((wf) => {
+      if (wf.id === 'wf-01' || wf.id === 'wf-02' || wf.id === 'wf-03' || wf.id === 'wf-04') {
+        return false;
+      }
       return true;
     });
   }
@@ -869,6 +850,11 @@ class Database {
     if (this.state.workflowLogs.length > 50) {
       this.state.workflowLogs = this.state.workflowLogs.slice(0, 50);
     }
+    this.save();
+  }
+
+  public clearWorkflowLogs(): void {
+    this.state.workflowLogs = [];
     this.save();
   }
 
