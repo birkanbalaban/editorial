@@ -13,6 +13,7 @@ import {
   Layers,
   AlertCircle,
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export interface ManualPostSubmissionPayload {
   title: string;
@@ -41,6 +42,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
   onSubmit,
   isProcessing,
 }) => {
+  const { tx } = useLanguage();
   const [activeMode, setActiveMode] = useState<'url' | 'manual'>('url');
 
   // URL Import State
@@ -92,7 +94,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
   const handleFetchArticleUrl = async () => {
     const trimmed = articleUrl.trim();
     if (!trimmed || !/^https?:\/\/\S+/i.test(trimmed)) {
-      setUrlError('Please enter a valid http/https blog or magazine URL.');
+      setUrlError(tx('Lütfen geçerli bir http/https blog veya dergi URL adresi girin.', 'Please enter a valid http/https blog or magazine URL.'));
       return;
     }
 
@@ -106,7 +108,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
       });
       const data = await res.json();
       if (!res.ok) {
-        setUrlError(data.error || 'Could not extract article details.');
+        setUrlError(data.error || tx('Makale ayrıntıları çıkarılamadı.', 'Could not extract article details.'));
       } else {
         if (data.title) setTitle(data.title);
         if (data.author) setPhotographer(data.author);
@@ -117,11 +119,16 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
         if (imgs.length > 0) {
           setSelectedImages(imgs.slice(0, Math.min(3, imgs.length)));
         } else {
-          setUrlError('Article fetched, but no standard gallery images were detected. You can paste image URLs or upload files below.');
+          setUrlError(
+            tx(
+              'Makale alındı ancak standart galeri görseli algılanamadı. Aşağıdan görsel URL yapıştırabilir veya dosya yükleyebilirsiniz.',
+              'Article fetched, but no standard gallery images were detected. You can paste image URLs or upload files below.'
+            )
+          );
         }
       }
     } catch (e: any) {
-      setUrlError(e?.message || 'Network error while fetching article.');
+      setUrlError(e?.message || tx('Makale alınırken ağ hatası oluştu.', 'Network error while fetching article.'));
     } finally {
       setIsFetchingUrl(false);
     }
@@ -140,7 +147,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
   const handleAddExternalImageUrl = () => {
     const clean = manualImageInput.trim();
     if (!clean || (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('/uploads/'))) {
-      setFormError('Enter a valid image URL starting with https:// or http://');
+      setFormError(tx('https:// veya http:// ile başlayan geçerli bir görsel URL girin', 'Enter a valid image URL starting with https:// or http://'));
       return;
     }
     setFormError(null);
@@ -167,14 +174,14 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result || ''));
-          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+          reader.onerror = () => reject(new Error(`${file.name} okunamadı`));
           reader.readAsDataURL(file);
         });
         filesToUpload.push({ name: file.name, dataUrl });
       }
 
       if (filesToUpload.length === 0) {
-        setFormError('Please select valid image files (PNG, JPG, WEBP).');
+        setFormError(tx('Lütfen geçerli görsel dosyaları seçin (PNG, JPG, WEBP).', 'Please select valid image files (PNG, JPG, WEBP).'));
         return;
       }
 
@@ -185,13 +192,13 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
       });
       const data = await res.json();
       if (!res.ok) {
-        setFormError(data.error || 'Failed to upload image(s).');
+        setFormError(data.error || tx('Görsel(ler) yüklenemedi.', 'Failed to upload image(s).'));
       } else if (Array.isArray(data.urls)) {
         setScrapedGallery((prev) => [...prev, ...data.urls]);
         setSelectedImages((prev) => [...prev, ...data.urls]);
       }
     } catch (e: any) {
-      setFormError(e?.message || 'Error uploading files.');
+      setFormError(e?.message || tx('Dosya yükleme hatası.', 'Error uploading files.'));
     } finally {
       setIsUploading(false);
     }
@@ -208,11 +215,11 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
     setFormError(null);
 
     if (!title.trim() || !photographer.trim() || !publication.trim()) {
-      setFormError('Title, Photographer/Author, and Publication/Source are required.');
+      setFormError(tx('Başlık, Fotoğrafçı/Yazar ve Yayın/Kaynak alanları zorunludur.', 'Title, Photographer/Author, and Publication/Source are required.'));
       return;
     }
     if (selectedImages.length === 0) {
-      setFormError('Please select, fetch, or upload at least 1 photograph for this post.');
+      setFormError(tx('Lütfen bu gönderi için en az 1 fotoğraf seçin, çekin veya yükleyin.', 'Please select, fetch, or upload at least 1 photograph for this post.'));
       return;
     }
 
@@ -243,10 +250,10 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             <Sparkles className="w-5 h-5 text-[#c5a880] shrink-0" />
             <div>
               <span className="text-[10px] font-mono uppercase tracking-widest text-[#c5a880] block">
-                Manual & Link-Driven Curation Studio
+                {tx('Manuel & Bağlantı Odaklı Kürasyon Stüdyosu', 'Manual & Link-Driven Curation Studio')}
               </span>
               <h3 className="font-editorial text-2xl text-[#f4f3ef] font-normal">
-                Add Editorial Post or Import from URL
+                {tx('Editoryal Gönderi Ekle veya URL ile İçe Aktar', 'Add Editorial Post or Import from URL')}
               </h3>
             </div>
           </div>
@@ -271,7 +278,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             }`}
           >
             <Link2 className="w-3.5 h-3.5" />
-            <span>Import from Blog / Magazine URL</span>
+            <span>{tx('Blog / Dergi URL’sinden İçe Aktar', 'Import from Blog / Magazine URL')}</span>
           </button>
           <button
             type="button"
@@ -283,7 +290,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             }`}
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>Manual Entry & Upload Photos</span>
+            <span>{tx('Manuel Giriş & Fotoğraf Yükle', 'Manual Entry & Upload Photos')}</span>
           </button>
         </div>
 
@@ -300,14 +307,17 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           {activeMode === 'url' && (
             <div className="p-4 bg-[#161616] border border-[#262626] rounded space-y-3">
               <label className="block text-[11px] font-mono uppercase tracking-wider text-[#c5a880]">
-                Paste Blog, Magazine, or Fashion Article URL
+                {tx('Blog, Dergi veya Moda Makalesi URL’sini Yapıştır', 'Paste Blog, Magazine, or Fashion Article URL')}
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Globe className="w-4 h-4 text-[#71717a] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="url"
-                    placeholder="https://numero.com/en/fashion/... or any fashion blog article URL"
+                    placeholder={tx(
+                      'https://numero.com/en/fashion/... veya herhangi bir moda makalesi URL’si',
+                      'https://numero.com/en/fashion/... or any fashion blog article URL'
+                    )}
                     value={articleUrl}
                     onChange={(e) => setArticleUrl(e.target.value)}
                     className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded pl-9 pr-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
@@ -322,12 +332,12 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                   {isFetchingUrl ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Fetching...</span>
+                      <span>{tx('Çekiliyor...', 'Fetching...')}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Fetch Article & Images</span>
+                      <span>{tx('Makaleyi & Görselleri Çek', 'Fetch Article & Images')}</span>
                     </>
                   )}
                 </button>
@@ -336,7 +346,10 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                 <p className="text-xs font-mono text-[#f87171]">{urlError}</p>
               )}
               <p className="text-[11px] text-[#8e8d8a] font-sans">
-                Automatically extracts article title, author/photographer credit, summary, and all photographs from the article body so you can pick your Carousel frames.
+                {tx(
+                  'Karusel karelerinizi seçebilmeniz için makale başlığını, yazar/fotoğrafçı künyesini, özeti ve makale gövdesindeki tüm fotoğrafları otomatik olarak çıkarır.',
+                  'Automatically extracts article title, author/photographer credit, summary, and all photographs from the article body so you can pick your Carousel frames.'
+                )}
               </p>
             </div>
           )}
@@ -345,11 +358,14 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono uppercase tracking-wider text-[#8e8d8a]">
-                Photographs & Carousel Frames ({selectedImages.length} Selected)
+                {tx(
+                  `Fotoğraflar & Karusel Kareleri (${selectedImages.length} Seçili)`,
+                  `Photographs & Carousel Frames (${selectedImages.length} Selected)`
+                )}
               </span>
               {combinedGallery.length > 0 && (
                 <span className="text-[10px] font-mono text-[#c5a880]">
-                  Click thumbnails to toggle · First frame is #1 Cover
+                  {tx('Seçmek için küçültmelere tıklayın · İlk kare #1 Kapaktır', 'Click thumbnails to toggle · First frame is #1 Cover')}
                 </span>
               )}
             </div>
@@ -380,16 +396,22 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
               {isUploading ? (
                 <div className="flex items-center justify-center gap-2 text-xs font-mono text-[#c5a880]">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Uploading photographs...</span>
+                  <span>{tx('Fotoğraflar yükleniyor...', 'Uploading photographs...')}</span>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <Upload className="w-5 h-5 text-[#c5a880] mx-auto" />
                   <p className="text-xs font-mono text-[#f4f3ef]">
-                    Drag & drop photos from your computer here, or click to browse
+                    {tx(
+                      'Bilgisayarınızdan fotoğrafları buraya sürükleyip bırakın veya seçmek için tıklayın',
+                      'Drag & drop photos from your computer here, or click to browse'
+                    )}
                   </p>
                   <p className="text-[11px] text-[#71717a] font-sans">
-                    Supports multi-image Carousel upload (JPG, PNG, WEBP)
+                    {tx(
+                      'Çoklu görsel Karusel yüklemeyi destekler (JPG, PNG, WEBP)',
+                      'Supports multi-image Carousel upload (JPG, PNG, WEBP)'
+                    )}
                   </p>
                 </div>
               )}
@@ -401,7 +423,10 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                 <ImageIcon className="w-3.5 h-3.5 text-[#71717a] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Or paste direct image URL (https://.../photo.jpg)"
+                  placeholder={tx(
+                    'Veya doğrudan görsel URL’si yapıştırın (https://.../photo.jpg)',
+                    'Or paste direct image URL (https://.../photo.jpg)'
+                  )}
                   value={manualImageInput}
                   onChange={(e) => setManualImageInput(e.target.value)}
                   className="w-full bg-[#181818] border border-[#2a2a2a] rounded pl-9 pr-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
@@ -413,7 +438,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                 className="px-3.5 py-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#333333] text-xs font-mono text-[#f4f3ef] rounded transition cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span>Add Image</span>
+                <span>{tx('Görsel Ekle', 'Add Image')}</span>
               </button>
             </div>
 
@@ -439,7 +464,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                       >
                         <img
                           src={imgUrl}
-                          alt={`Frame ${idx + 1}`}
+                          alt={tx(`Kare ${idx + 1}`, `Frame ${idx + 1}`)}
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover object-top"
                         />
@@ -455,10 +480,10 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                         }`}
                       >
                         {orderIdx === 0
-                          ? '1. Cover'
+                          ? tx('1. Kapak', '1. Cover')
                           : isSelected
-                          ? `${orderIdx + 1}. Frame`
-                          : '+ Select'}
+                          ? `${orderIdx + 1}. ${tx('Kare', 'Frame')}`
+                          : tx('+ Seç', '+ Select')}
                       </span>
 
                       {isSelected && orderIdx > 0 && (
@@ -470,7 +495,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                           }}
                           className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-[#0a0a0a]/90 border border-[#c5a880]/50 text-[8px] font-mono text-[#c5a880] hover:bg-[#c5a880] hover:text-[#0a0a0a] cursor-pointer"
                         >
-                          Make #1
+                          {tx('#1 Yap', 'Make #1')}
                         </button>
                       )}
 
@@ -482,7 +507,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                             setScrapedGallery((prev) => prev.filter((u) => u !== imgUrl));
                           }}
                           className="absolute top-1 right-1 p-0.5 rounded bg-[#0a0a0a]/80 text-[#71717a] hover:text-[#ef4444] cursor-pointer"
-                          title="Remove from list"
+                          title={tx('Listeden kaldır', 'Remove from list')}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -498,12 +523,12 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Editorial Title *
+                {tx('Editoryal Başlık *', 'Editorial Title *')}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Silhouettes in Brutalist Fog"
+                placeholder={tx('örn. Silhouettes in Brutalist Fog', 'e.g. Silhouettes in Brutalist Fog')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-[#181818] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-sans focus:outline-none focus:border-[#c5a880]"
@@ -511,12 +536,12 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Photographer / Author *
+                {tx('Fotoğrafçı / Yazar *', 'Photographer / Author *')}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Txema Yeste or @username"
+                placeholder={tx('örn. Txema Yeste veya @kullanıcı', 'e.g. Txema Yeste or @username')}
                 value={photographer}
                 onChange={(e) => setPhotographer(e.target.value)}
                 className="w-full bg-[#181818] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-sans focus:outline-none focus:border-[#c5a880]"
@@ -527,12 +552,12 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Publication / Blog Source *
+                {tx('Yayın / Blog Kaynağı *', 'Publication / Blog Source *')}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Numéro Magazine, Personal Studio"
+                placeholder={tx('örn. Numéro Magazine, Kişisel Stüdyo', 'e.g. Numéro Magazine, Personal Studio')}
                 value={publication}
                 onChange={(e) => setPublication(e.target.value)}
                 className="w-full bg-[#181818] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-sans focus:outline-none focus:border-[#c5a880]"
@@ -540,11 +565,11 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Stylist / Creative Direction (Optional)
+                {tx('Stilist / Kreatif Direktör (Opsiyonel)', 'Stylist / Creative Direction (Optional)')}
               </label>
               <input
                 type="text"
-                placeholder="e.g. Robbie Spencer"
+                placeholder={tx('örn. Robbie Spencer', 'e.g. Robbie Spencer')}
                 value={stylist}
                 onChange={(e) => setStylist(e.target.value)}
                 className="w-full bg-[#181818] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#f4f3ef] font-sans focus:outline-none focus:border-[#c5a880]"
@@ -554,11 +579,11 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
 
           <div>
             <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-              Article Summary / Shoot Context
+              {tx('Makale Özeti / Çekim Bağlamı', 'Article Summary / Shoot Context')}
             </label>
             <textarea
               rows={2}
-              placeholder="Visual notes, styling context, shoot location..."
+              placeholder={tx('Görsel notlar, styling bağlamı, çekim lokasyonu...', 'Visual notes, styling context, shoot location...')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full bg-[#181818] border border-[#2a2a2a] rounded p-3 text-xs text-[#f4f3ef] font-sans focus:outline-none focus:border-[#c5a880]"
@@ -568,11 +593,14 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Instagram Caption (Leave blank for AI draft)
+                {tx('Instagram Açıklaması (EN · AI taslağı için boş bırakın)', 'Instagram Caption (Leave blank for AI draft)')}
               </label>
               <textarea
                 rows={2}
-                placeholder="Write custom caption or leave empty to let Gemini craft one..."
+                placeholder={tx(
+                  'İngilizce özel açıklama yazın veya Gemini’nin oluşturması için boş bırakın...',
+                  'Write custom caption or leave empty to let Gemini craft one...'
+                )}
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 className="w-full bg-[#181818] border border-[#2a2a2a] rounded p-2.5 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
@@ -580,7 +608,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-mono text-[#8e8d8a] uppercase mb-1">
-                Hashtags (Optional, space/comma separated)
+                {tx('Etiketler / Hashtags (Opsiyonel · EN)', 'Hashtags (Optional, space/comma separated)')}
               </label>
               <textarea
                 rows={2}
@@ -596,24 +624,24 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           <div className="p-4 bg-[#161616] border border-[#262626] rounded space-y-2.5">
             <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-[#c5a880]">
               <Layers className="w-3.5 h-3.5" />
-              <span>Target Workflow Destination</span>
+              <span>{tx('Hedef İş Akışı Konumu', 'Target Workflow Destination')}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 {
                   id: 'candidate' as const,
-                  label: 'Daily Selection',
-                  desc: 'Add to Discovery Pool & Top 5',
+                  label: tx('Günlük Seçki', 'Daily Selection'),
+                  desc: tx('Keşif Havuzu ve İlk 5’e ekle', 'Add to Discovery Pool & Top 5'),
                 },
                 {
                   id: 'selected' as const,
-                  label: 'Approval Queue',
-                  desc: 'Send straight to review queue',
+                  label: tx('Onay Kuyruğu', 'Approval Queue'),
+                  desc: tx('Doğrudan inceleme kuyruğuna gönder', 'Send straight to review queue'),
                 },
                 {
                   id: 'approved' as const,
-                  label: 'Post Packages',
-                  desc: 'Approve immediately for release',
+                  label: tx('Gönderi Paketleri', 'Post Packages'),
+                  desc: tx('Yayın için hemen onayla', 'Approve immediately for release'),
                 },
               ].map((dest) => {
                 const active = targetStatus === dest.id;
@@ -644,7 +672,10 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
           {/* Footer Actions */}
           <div className="pt-4 border-t border-[#222222] flex items-center justify-between gap-3">
             <span className="text-[11px] font-mono text-[#71717a]">
-              {selectedImages.length} frame(s) queued for Carousel
+              {tx(
+                `Karusel için ${selectedImages.length} kare sıraya alındı`,
+                `${selectedImages.length} frame(s) queued for Carousel`
+              )}
             </span>
             <div className="flex items-center gap-3">
               <button
@@ -652,7 +683,7 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                 onClick={handleClose}
                 className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#8e8d8a] hover:text-[#f4f3ef] transition cursor-pointer"
               >
-                Cancel
+                {tx('İptal', 'Cancel')}
               </button>
               <button
                 type="submit"
@@ -662,18 +693,18 @@ export const AiResearchModal: React.FC<AiResearchModalProps> = ({
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Saving & Scoring...</span>
+                    <span>{tx('Kaydediliyor & Puanlanıyor...', 'Saving & Scoring...')}</span>
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
                     <span>
-                      Create & Send to{' '}
+                      {tx('Oluştur ve Şuraya Gönder: ', 'Create & Send to ')}
                       {targetStatus === 'approved'
-                        ? 'Post Packages'
+                        ? tx('Gönderi Paketleri', 'Post Packages')
                         : targetStatus === 'selected'
-                        ? 'Approval Queue'
-                        : 'Daily Selection'}
+                        ? tx('Onay Kuyruğu', 'Approval Queue')
+                        : tx('Günlük Seçki', 'Daily Selection')}
                     </span>
                   </>
                 )}

@@ -24,6 +24,7 @@ import {
   Layers,
   ExternalLink
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface PostPackagesViewProps {
   posts: EditorialPost[];
@@ -31,14 +32,6 @@ interface PostPackagesViewProps {
   onPostAction?: (postId: string, action: string, payload?: any) => Promise<void>;
   isProcessing?: boolean;
 }
-
-const TIME_PRESETS = [
-  { label: '10:00 · Morning Archive', time: '10:00', slotName: 'Morning Archive' },
-  { label: '14:00 · First Window', time: '14:00', slotName: 'First Daily Window' },
-  { label: '18:00 · Golden Hour', time: '18:00', slotName: 'Golden Hour Editorial' },
-  { label: '20:00 · Second Window', time: '20:00', slotName: 'Evening Prime Slot' },
-  { label: '22:30 · Late Night', time: '22:30', slotName: 'Late Night Monograph' },
-];
 
 function toLocalDateStr(isoString?: string): string {
   const d = isoString ? new Date(isoString) : new Date();
@@ -70,6 +63,16 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
   onPostAction,
   isProcessing,
 }) => {
+  const { lang, tx, formatPostStatus, formatRightsStatus } = useLanguage();
+
+  const TIME_PRESETS = [
+    { label: tx('10:00 · Sabah Arşivi', '10:00 · Morning Archive'), time: '10:00', slotName: tx('Sabah Arşivi', 'Morning Archive') },
+    { label: tx('14:00 · İlk Pencere', '14:00 · First Window'), time: '14:00', slotName: tx('İlk Günlük Pencere', 'First Daily Window') },
+    { label: tx('18:00 · Altın Saat', '18:00 · Golden Hour'), time: '18:00', slotName: tx('Altın Saat Editoryal', 'Golden Hour Editorial') },
+    { label: tx('20:00 · İkinci Pencere', '20:00 · Second Window'), time: '20:00', slotName: tx('Akşam Ana Slotu', 'Evening Prime Slot') },
+    { label: tx('22:30 · Gece Monografisi', '22:30 · Late Night'), time: '22:30', slotName: tx('Gece Monografisi', 'Late Night Monograph') },
+  ];
+
   const [selectedPostId, setSelectedPostId] = useState<string>(posts[0]?.id || '');
   const [activeRatio, setActiveRatio] = useState<'4:5' | '1:1'>('4:5');
   const [copiedCaption, setCopiedCaption] = useState(false);
@@ -217,7 +220,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
     setEditingSlotPostId(post.id);
     setEditDate(toLocalDateStr(post.scheduledTime));
     setEditTime(post.scheduledTime ? toLocalTimeStr(post.scheduledTime) : '14:00');
-    setEditLabel(post.slotLabel || post.approvalRecord?.slotLabel || 'Custom Slot');
+    setEditLabel(post.slotLabel || post.approvalRecord?.slotLabel || tx('Özel Slot', 'Custom Slot'));
   };
 
   const handleSaveInlineSlot = async (postId: string) => {
@@ -236,7 +239,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
     const iso = combineDateAndTimeToIso(newSlotDate, newSlotTime);
     await onPostAction(newSlotPostId, 'schedule', {
       scheduledTime: iso,
-      slotLabel: newSlotLabel.trim() || 'Scheduled Slot',
+      slotLabel: newSlotLabel.trim() || tx('Planlı Slot', 'Scheduled Slot'),
     });
     setSelectedPostId(newSlotPostId);
     setShowAddSlotForm(false);
@@ -301,9 +304,9 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
   };
 
   const formatSlotTime = (isoString?: string) => {
-    if (!isoString) return 'Slot: Next Available Window';
+    if (!isoString) return tx('Slot: Sonraki Uygun Pencere', 'Slot: Next Available Window');
     const date = new Date(isoString);
-    if (isNaN(date.getTime())) return 'Slot: Custom';
+    if (isNaN(date.getTime())) return tx('Slot: Özel', 'Slot: Custom');
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
     const tomorrow = new Date(today);
@@ -311,15 +314,15 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
 
     const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    if (isToday) return `Today · ${timeStr} (UTC+3)`;
-    if (isTomorrow) return `Tomorrow · ${timeStr} (UTC+3)`;
-    return `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${timeStr} (UTC+3)`;
+    if (isToday) return `${tx('Bugün', 'Today')} · ${timeStr} (UTC+3)`;
+    if (isTomorrow) return `${tx('Yarın', 'Tomorrow')} · ${timeStr} (UTC+3)`;
+    return `${date.toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · ${timeStr} (UTC+3)`;
   };
 
   if (!selectedPost) {
     return (
       <div className="text-center py-20 border border-dashed border-[#222222] rounded bg-[#121212]">
-        <p className="text-sm text-[#8e8d8a]">No editorial posts available to package.</p>
+        <p className="text-sm text-[#8e8d8a]">{tx('Paketlenecek editoryal gönderi bulunmuyor.', 'No editorial posts available to package.')}</p>
       </div>
     );
   }
@@ -332,15 +335,18 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
       <div className="border-b border-[#222222] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-[#c5a880] mb-1 font-mono">
-            <span>Social Media Engineering</span>
+            <span>{tx('Sosyal Medya Mühendisliği', 'Social Media Engineering')}</span>
             <span>·</span>
-            <span>Customizable Slots & Feed Packages</span>
+            <span>{tx('Özelleştirilebilir Slotlar & Akış Paketleri', 'Customizable Slots & Feed Packages')}</span>
           </div>
           <h1 className="font-editorial text-3xl md:text-4xl text-[#f4f3ef] font-normal tracking-tight">
-            Complete Instagram Post Packages
+            {tx('Tam Instagram Post Paketleri', 'Complete Instagram Post Packages')}
           </h1>
           <p className="text-sm text-[#8e8d8a] mt-1 max-w-2xl font-sans">
-            Create custom publishing slots, set exact dates and times, edit or AI-regenerate captions inline, and manage the chronological publishing queue on a single page.
+            {tx(
+              'Özel yayınlama slotları oluşturun, kesin tarih ve saat belirleyin, açıklamaları satır içinde düzenleyin veya AI ile yeniden üretin ve kronolojik yayın kuyruğunu tek sayfadan yönetin.',
+              'Create custom publishing slots, set exact dates and times, edit or AI-regenerate captions inline, and manage the chronological publishing queue on a single page.'
+            )}
           </p>
         </div>
 
@@ -354,7 +360,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
             className="flex items-center gap-2 px-4 py-2.5 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] font-mono text-xs uppercase tracking-wider font-semibold rounded transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>{showAddSlotForm ? 'Close Slot Creator' : '+ Add Publishing Slot'}</span>
+            <span>{showAddSlotForm ? tx('Slot Oluşturucuyu Kapat', 'Close Slot Creator') : tx('+ Yayın Slotu Ekle', '+ Add Publishing Slot')}</span>
           </button>
         </div>
       </div>
@@ -367,14 +373,14 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-editorial text-xl text-[#f4f3ef]">
-                  Chronological Publishing Queue & Custom Slots
+                  {tx('Kronolojik Yayın Kuyruğu & Özel Slotlar', 'Chronological Publishing Queue & Custom Slots')}
                 </h2>
                 <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#1c1c1c] text-[#c5a880] border border-[#c5a880]/20">
-                  {queuePosts.length} Active Slots
+                  {queuePosts.length} {tx('Aktif Slot', 'Active Slots')}
                 </span>
               </div>
               <p className="text-xs text-[#8e8d8a] font-mono mt-0.5">
-                Fully customizable date, time (HH:mm), slot labels, and priority ordering
+                {tx('Tamamen özelleştirilebilir tarih, saat (SS:dd), slot etiketleri ve öncelik sıralaması', 'Fully customizable date, time (HH:mm), slot labels, and priority ordering')}
               </p>
             </div>
           </div>
@@ -386,14 +392,14 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1c18] hover:bg-[#28241d] border border-[#c5a880]/40 rounded text-xs font-mono text-[#c5a880] transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New Custom Slot</span>
+              <span>{tx('Yeni Özel Slot', 'New Custom Slot')}</span>
             </button>
             <button
               type="button"
               onClick={() => setShowQueueExpanded(!showQueueExpanded)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#181818] hover:bg-[#222222] border border-[#2a2a2a] rounded text-xs font-mono text-[#f4f3ef] transition cursor-pointer"
             >
-              <span>{showQueueExpanded ? 'Collapse' : 'Expand Queue'}</span>
+              <span>{showQueueExpanded ? tx('Daralt', 'Collapse') : tx('Kuyruğu Genişlet', 'Expand Queue')}</span>
               {showQueueExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
@@ -409,7 +415,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-[#c5a880]" />
                 <span className="text-xs font-mono uppercase tracking-wider text-[#f4f3ef] font-semibold">
-                  Create & Assign Custom Publishing Slot
+                  {tx('Özel Yayın Slotu Oluştur & Ata', 'Create & Assign Custom Publishing Slot')}
                 </span>
               </div>
               <button
@@ -425,7 +431,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               {/* Step 1: Select Editorial Post */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-mono uppercase text-[#8e8d8a]">
-                  1. Editorial Package to Assign
+                  {tx('1. Atanacak Editöryal Paket', '1. Editorial Package to Assign')}
                 </label>
                 <select
                   value={newSlotPostId}
@@ -434,7 +440,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 >
                   {posts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      [{p.status.toUpperCase()}] {p.title} — {p.photographer}
+                      [{formatPostStatus(p.status).toUpperCase()}] {p.title} — {p.photographer}
                     </option>
                   ))}
                 </select>
@@ -443,7 +449,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               {/* Step 2: Select Date + Quick Day Buttons */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-mono uppercase text-[#8e8d8a]">
-                  2. Publishing Date
+                  {tx('2. Yayın Tarihi', '2. Publishing Date')}
                 </label>
                 <input
                   type="date"
@@ -457,28 +463,28 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                     onClick={() => setDayOffset(0, setNewSlotDate)}
                     className="px-2 py-0.5 bg-[#1c1c1c] hover:bg-[#262626] text-[10px] font-mono text-[#c5a880] rounded cursor-pointer"
                   >
-                    Today
+                    {tx('Bugün', 'Today')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDayOffset(1, setNewSlotDate)}
                     className="px-2 py-0.5 bg-[#1c1c1c] hover:bg-[#262626] text-[10px] font-mono text-[#c5a880] rounded cursor-pointer"
                   >
-                    Tomorrow
+                    {tx('Yarın', 'Tomorrow')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDayOffset(2, setNewSlotDate)}
                     className="px-2 py-0.5 bg-[#1c1c1c] hover:bg-[#262626] text-[10px] font-mono text-[#8e8d8a] hover:text-[#f4f3ef] rounded cursor-pointer"
                   >
-                    +2 Days
+                    {tx('+2 Gün', '+2 Days')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDayOffset(3, setNewSlotDate)}
                     className="px-2 py-0.5 bg-[#1c1c1c] hover:bg-[#262626] text-[10px] font-mono text-[#8e8d8a] hover:text-[#f4f3ef] rounded cursor-pointer"
                   >
-                    +3 Days
+                    {tx('+3 Gün', '+3 Days')}
                   </button>
                 </div>
               </div>
@@ -486,7 +492,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               {/* Step 3: Exact Time (HH:mm) */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-mono uppercase text-[#8e8d8a]">
-                  3. Custom Time (24h)
+                  {tx('3. Özel Saat (24s)', '3. Custom Time (24h)')}
                 </label>
                 <input
                   type="time"
@@ -519,13 +525,13 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <div className="space-y-1.5 flex flex-col justify-between">
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-[#8e8d8a] mb-1.5">
-                    4. Slot Label / Window Name
+                    {tx('4. Slot Etiketi / Pencere Adı', '4. Slot Label / Window Name')}
                   </label>
                   <input
                     type="text"
                     value={newSlotLabel}
                     onChange={(e) => setNewSlotLabel(e.target.value)}
-                    placeholder="e.g. Evening Couture Drop"
+                    placeholder={tx('ör. Akşam Couture Yayını', 'e.g. Evening Couture Drop')}
                     className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
                   />
                 </div>
@@ -535,7 +541,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   className="w-full mt-2 px-4 py-2 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] font-mono text-xs uppercase tracking-wider font-semibold rounded transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Save & Add Slot to Queue</span>
+                  <span>{tx('Kaydet ve Kuyruğa Slot Ekle', 'Save & Add Slot to Queue')}</span>
                 </button>
               </div>
             </div>
@@ -547,14 +553,14 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
           <div className="pt-1">
             {queuePosts.length === 0 ? (
               <div className="p-6 text-center text-xs font-mono text-[#8e8d8a] bg-[#161616] border border-[#222222] rounded space-y-2">
-                <p>No posts are currently in the publishing queue.</p>
+                <p>{tx('Yayın kuyruğunda şu anda gönderi yok.', 'No posts are currently in the publishing queue.')}</p>
                 <button
                   type="button"
                   onClick={() => setShowAddSlotForm(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1c18] border border-[#c5a880]/40 rounded text-[#c5a880] hover:bg-[#28241d] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Create First Publishing Slot</span>
+                  <span>{tx('İlk Yayın Slotunu Oluştur', 'Create First Publishing Slot')}</span>
                 </button>
               </div>
             ) : (
@@ -614,12 +620,12 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                               {post.rightsStatus === 'verified' ? (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-mono text-[#7cd38b]">
                                   <ShieldCheck className="w-3 h-3" />
-                                  Verified Rights
+                                  {tx('Doğrulanmış Haklar', 'Verified Rights')}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-mono text-[#c5a880]">
                                   <ShieldAlert className="w-3 h-3" />
-                                  Advisory Rights (Ready)
+                                  {tx('Danışma Hakları (Hazır)', 'Advisory Rights (Ready)')}
                                 </span>
                               )}
                             </div>
@@ -646,7 +652,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             }`}
                           >
                             <Sliders className="w-3 h-3" />
-                            <span>{isEditingThisSlot ? 'Close Time Editor' : 'Customize Time'}</span>
+                            <span>{isEditingThisSlot ? tx('Saat Düzenleyiciyi Kapat', 'Close Time Editor') : tx('Saati Özelleştir', 'Customize Time')}</span>
                           </button>
 
                           {/* Quick Postpone +2h */}
@@ -655,10 +661,10 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             onClick={() => handlePostponeSlot(post, 2)}
                             disabled={isProcessing}
                             className="px-2 py-1.5 bg-[#202020] hover:bg-[#282828] border border-[#333333] hover:border-[#c5a880] rounded text-[11px] text-[#f4f3ef] transition cursor-pointer flex items-center gap-1"
-                            title="Postpone by +2 hours"
+                            title={tx('+2 saat ertele', 'Postpone by +2 hours')}
                           >
                             <FastForward className="w-3 h-3 text-[#c5a880]" />
-                            <span>+2h</span>
+                            <span>{tx('+2s', '+2h')}</span>
                           </button>
 
                           {/* Quick Postpone +6h */}
@@ -667,9 +673,9 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             onClick={() => handlePostponeSlot(post, 6)}
                             disabled={isProcessing}
                             className="px-2 py-1.5 bg-[#202020] hover:bg-[#282828] border border-[#333333] hover:border-[#c5a880] rounded text-[11px] text-[#f4f3ef] transition cursor-pointer"
-                            title="Push +6 hours"
+                            title={tx('+6 saat ileri al', 'Push +6 hours')}
                           >
-                            +6h
+                            {tx('+6s', '+6h')}
                           </button>
 
                           {/* Postpone to Tomorrow 14:00 */}
@@ -679,7 +685,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             disabled={isProcessing}
                             className="px-2 py-1.5 bg-[#202020] hover:bg-[#282828] border border-[#333333] hover:border-[#c5a880] rounded text-[11px] text-[#f4f3ef] transition cursor-pointer"
                           >
-                            Tomorrow 14:00
+                            {tx('Yarın 14:00', 'Tomorrow 14:00')}
                           </button>
 
                           {/* Move to Top #1 */}
@@ -690,7 +696,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                               disabled={isProcessing}
                               className="px-2 py-1.5 bg-[#202020] hover:bg-[#282828] border border-[#333333] rounded text-[11px] text-[#c5a880] transition cursor-pointer"
                             >
-                              Top #1
+                              {tx('1. Sıraya Al', 'Top #1')}
                             </button>
                           )}
 
@@ -702,7 +708,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                               className="px-2.5 py-1.5 bg-[#202020] hover:bg-[#282828] border border-[#333333] rounded text-[11px] text-[#8e8d8a] hover:text-[#f4f3ef] transition cursor-pointer flex items-center gap-1"
                             >
                               <Edit3 className="w-3 h-3" />
-                              <span>Edit Copy</span>
+                              <span>{tx('Metni Düzenle', 'Edit Copy')}</span>
                             </button>
                           )}
 
@@ -713,7 +719,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                               onClick={() => onPostAction(post.id, 'unschedule')}
                               disabled={isProcessing}
                               className="p-1.5 bg-[#202020] hover:bg-[#2a1a1a] border border-[#333333] hover:border-[#f87171]/50 rounded text-[#8e8d8a] hover:text-[#f87171] transition cursor-pointer"
-                              title="Remove from scheduled slots"
+                              title={tx('Planlı slotlardan kaldır', 'Remove from scheduled slots')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -728,7 +734,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                               className="px-2.5 py-1.5 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] text-[11px] font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1"
                             >
                               <Send className="w-3 h-3" />
-                              <span>Publish</span>
+                              <span>{tx('Yayınla', 'Publish')}</span>
                             </button>
                           )}
                         </div>
@@ -740,7 +746,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-[10px] font-mono uppercase text-[#8e8d8a] mb-1">
-                                Custom Date
+                                {tx('Özel Tarih', 'Custom Date')}
                               </label>
                               <input
                                 type="date"
@@ -751,7 +757,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             </div>
                             <div>
                               <label className="block text-[10px] font-mono uppercase text-[#8e8d8a] mb-1">
-                                Exact Time (HH:mm)
+                                {tx('Kesin Saat (SS:dd)', 'Exact Time (HH:mm)')}
                               </label>
                               <input
                                 type="time"
@@ -762,13 +768,13 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             </div>
                             <div>
                               <label className="block text-[10px] font-mono uppercase text-[#8e8d8a] mb-1">
-                                Custom Slot Label
+                                {tx('Özel Slot Etiketi', 'Custom Slot Label')}
                               </label>
                               <input
                                 type="text"
                                 value={editLabel}
                                 onChange={(e) => setEditLabel(e.target.value)}
-                                placeholder="e.g. Evening Feature"
+                                placeholder={tx('ör. Akşam Özel Seçkisi', 'e.g. Evening Feature')}
                                 className="w-full px-2.5 py-1.5 bg-[#0a0a0a] border border-[#2a2a2a] rounded text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
                               />
                             </div>
@@ -777,7 +783,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span className="text-[10px] font-mono text-[#71717a] uppercase mr-1">
-                                Quick Window Presets:
+                                {tx('Hızlı Pencere Önayarları:', 'Quick Window Presets:')}
                               </span>
                               {TIME_PRESETS.map((p) => (
                                 <button
@@ -804,7 +810,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                                 onClick={() => setEditingSlotPostId(null)}
                                 className="px-3 py-1.5 bg-[#1c1c1c] hover:bg-[#262626] text-xs font-mono text-[#8e8d8a] rounded cursor-pointer"
                               >
-                                Cancel
+                                {tx('İptal', 'Cancel')}
                               </button>
                               <button
                                 type="button"
@@ -812,7 +818,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                                 className="px-3 py-1.5 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] text-xs font-mono font-semibold rounded cursor-pointer flex items-center gap-1"
                               >
                                 <Save className="w-3.5 h-3.5" />
-                                <span>Update Slot</span>
+                                <span>{tx('Slotu Güncelle', 'Update Slot')}</span>
                               </button>
                             </div>
                           </div>
@@ -834,10 +840,10 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
         <div className="lg:col-span-3 space-y-3 min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-wider text-[#71717a] font-mono block">
-              All Packages ({posts.length})
+              {tx('Tüm Paketler', 'All Packages')} ({posts.length})
             </span>
             <span className="text-[10px] font-mono text-[#8e8d8a]">
-              Select to customize
+              {tx('Özelleştirmek için seçin', 'Select to customize')}
             </span>
           </div>
 
@@ -877,8 +883,8 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] font-mono text-[#c5a880]">{post.rightsStatus}</span>
-                      <span className="text-[10px] font-mono text-[#71717a] uppercase">{post.status}</span>
+                      <span className="text-[10px] font-mono text-[#c5a880]">{formatRightsStatus(post.rightsStatus)}</span>
+                      <span className="text-[10px] font-mono text-[#71717a] uppercase">{formatPostStatus(post.status)}</span>
                     </div>
                   </div>
                 </button>
@@ -898,7 +904,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   activeRatio === '4:5' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
                 }`}
               >
-                Feed 4:5
+                {tx('Akış 4:5', 'Feed 4:5')}
               </button>
               <button
                 onClick={() => setActiveRatio('1:1')}
@@ -906,7 +912,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   activeRatio === '1:1' ? 'bg-[#222222] text-[#f4f3ef]' : 'text-[#8e8d8a]'
                 }`}
               >
-                Square 1:1
+                {tx('Kare 1:1', 'Square 1:1')}
               </button>
             </div>
 
@@ -918,7 +924,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[#161616] hover:bg-[#222222] border border-[#2a2a2a] text-xs font-mono text-[#c5a880] hover:text-[#f4f3ef]"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>Original Article ({selectedPost.publication})</span>
+                <span>{tx('Orijinal Makale', 'Original Article')} ({selectedPost.publication})</span>
               </a>
             )}
           </div>
@@ -960,7 +966,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                       className="w-full h-full object-cover object-top transition-all duration-300"
                     />
                   ) : (
-                    <div className="text-xs text-[#71717a]">Media Preview</div>
+                    <div className="text-xs text-[#71717a]">{tx('Medya Önizleme', 'Media Preview')}</div>
                   )}
 
                   {/* Top-Right Carousel Counter Pill */}
@@ -979,7 +985,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           setActiveCarouselSlide((safeIdx - 1 + frames.length) % frames.length)
                         }
                         className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
-                        title="Previous frame"
+                        title={tx('Önceki kare', 'Previous frame')}
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
@@ -987,7 +993,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                         type="button"
                         onClick={() => setActiveCarouselSlide((safeIdx + 1) % frames.length)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
-                        title="Next frame"
+                        title={tx('Sonraki kare', 'Next frame')}
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -1026,7 +1032,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <span>🔖</span>
             </div>
 
-            {/* Caption Area in Feed */}
+            {/* Caption Area in Feed (Kept in English per user preference) */}
             <div className="px-3.5 pb-4 text-xs font-sans text-[#e4e4e7] space-y-1 break-words">
               <p>
                 <span className="font-semibold text-white mr-1.5">theeditorialindex</span>
@@ -1046,18 +1052,18 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <div className="flex items-center gap-1.5 text-xs font-mono uppercase text-[#c5a880]">
                 <Layers className="w-3.5 h-3.5" />
                 <span>
-                  Carousel & Frame Studio ({(selectedPost.imageUrls || []).length} Selected Photos)
+                  {tx('Carousel & Kare Stüdyosu', 'Carousel & Frame Studio')} ({(selectedPost.imageUrls || []).length} {tx('Seçili Fotoğraf', 'Selected Photos')})
                 </span>
               </div>
               <span className="text-[10px] font-mono text-[#8e8d8a]">
-                Reorder (←/→), Make Cover (#1), Remove (×), or Add
+                {tx('Sırala (←/→), Kapak Yap (#1), Kaldır (×) veya Ekle', 'Reorder (←/→), Make Cover (#1), Remove (×), or Add')}
               </span>
             </div>
 
             {/* 1. Selected Carousel Frames (Reorderable & Removable) */}
             <div className="space-y-2">
               <span className="block text-[10px] font-mono uppercase text-[#f4f3ef]">
-                1. Active Post Frames (Published in This Order):
+                {tx('1. Aktif Gönderi Kareleri (Bu Sırayla Yayınlanır):', '1. Active Post Frames (Published in This Order):')}
               </span>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                 {(selectedPost.imageUrls || []).map((imgUrl, idx) => {
@@ -1094,7 +1100,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             : 'bg-[#0a0a0a]/85 text-[#f4f3ef]'
                         }`}
                       >
-                        {idx === 0 ? '#1 Cover' : `#${idx + 1}`}
+                        {idx === 0 ? tx('#1 Kapak', '#1 Cover') : `#${idx + 1}`}
                       </span>
 
                       {/* Remove Frame Button */}
@@ -1103,7 +1109,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           type="button"
                           onClick={() => handleRemoveCarouselFrame(imgUrl)}
                           className="absolute top-1 right-1 p-1 rounded bg-[#0a0a0a]/85 hover:bg-[#ef4444] text-[#f4f3ef] cursor-pointer"
-                          title="Remove this photo from post"
+                          title={tx('Bu fotoğrafı gönderiden kaldır', 'Remove this photo from post')}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1116,7 +1122,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           disabled={idx === 0}
                           onClick={() => handleMoveCarouselFrame(idx, -1)}
                           className="text-[10px] font-mono text-[#d4d4d8] hover:text-[#c5a880] disabled:opacity-30 cursor-pointer px-1"
-                          title="Move left"
+                          title={tx('Sola taşı', 'Move left')}
                         >
                           ←
                         </button>
@@ -1125,7 +1131,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                             type="button"
                             onClick={() => handleMakeCoverFrame(imgUrl)}
                             className="text-[8px] font-mono uppercase text-[#c5a880] hover:underline cursor-pointer"
-                            title="Make #1 Cover"
+                            title={tx('#1 Kapak Yap', 'Make #1 Cover')}
                           >
                             #1
                           </button>
@@ -1135,7 +1141,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           disabled={idx === totalSelected - 1}
                           onClick={() => handleMoveCarouselFrame(idx, 1)}
                           className="text-[10px] font-mono text-[#d4d4d8] hover:text-[#c5a880] disabled:opacity-30 cursor-pointer px-1"
-                          title="Move right"
+                          title={tx('Sağa taşı', 'Move right')}
                         >
                           →
                         </button>
@@ -1156,7 +1162,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               return (
                 <div className="pt-3 border-t border-[#1e1e1e] space-y-2">
                   <span className="block text-[10px] font-mono uppercase text-[#8e8d8a]">
-                    2. Other Photos from This Article's Shoot (Click to Add to Post):
+                    {tx('2. Bu Makalenin Çekiminden Diğer Fotoğraflar (Eklemek İçin Tıklayın):', "2. Other Photos from This Article's Shoot (Click to Add to Post):")}
                   </span>
                   <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
                     {unselectedShootPhotos.map((imgUrl, idx) => (
@@ -1165,7 +1171,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                         type="button"
                         onClick={() => handleAddShootFrameToPost(imgUrl)}
                         className="group relative aspect-[3/4] rounded overflow-hidden border border-[#262626] opacity-70 hover:opacity-100 hover:border-[#c5a880] transition cursor-pointer"
-                        title="Add this shoot photograph to the Carousel"
+                        title={tx("Bu çekim fotoğrafını Carousel'e ekle", 'Add this shoot photograph to the Carousel')}
                       >
                         <img
                           src={imgUrl}
@@ -1174,7 +1180,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                           className="w-full h-full object-cover object-top"
                         />
                         <span className="absolute bottom-1 left-1 right-1 bg-[#0a0a0a]/90 text-[#c5a880] text-[9px] font-mono uppercase py-0.5 rounded text-center">
-                          + Add Frame
+                          {tx('+ Kare Ekle', '+ Add Frame')}
                         </span>
                       </button>
                     ))}
@@ -1189,7 +1195,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 type="text"
                 value={newPhotoUrlInput}
                 onChange={(e) => setNewPhotoUrlInput(e.target.value)}
-                placeholder="Paste additional image URL (https://...) to add to this post..."
+                placeholder={tx('Bu gönderiye eklenecek görsel URL’sini yapıştırın (https://...)...', 'Paste additional image URL (https://...) to add to this post...')}
                 className="flex-1 px-2.5 py-1.5 bg-[#0a0a0a] border border-[#262626] rounded text-xs font-mono text-[#f4f3ef] focus:outline-none focus:border-[#c5a880]"
               />
               <button
@@ -1197,7 +1203,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 className="px-3 py-1.5 bg-[#1e1c18] hover:bg-[#28241d] border border-[#c5a880]/40 rounded text-xs font-mono text-[#c5a880] cursor-pointer flex items-center gap-1 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add Photo</span>
+                <span>{tx('Fotoğraf Ekle', 'Add Photo')}</span>
               </button>
             </form>
           </div>
@@ -1211,17 +1217,17 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] uppercase tracking-wider text-[#c5a880] font-mono flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                Slot & Time Customizer
+                {tx('Slot & Saat Özelleştirici', 'Slot & Time Customizer')}
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1a1a1a] text-[#a1a1aa] uppercase">
-                {selectedPost.status}
+                {formatPostStatus(selectedPost.status)}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[10px] font-mono uppercase text-[#71717a] mb-1">
-                  Date
+                  {tx('Tarih', 'Date')}
                 </label>
                 <input
                   type="date"
@@ -1232,7 +1238,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               </div>
               <div>
                 <label className="block text-[10px] font-mono uppercase text-[#71717a] mb-1">
-                  Exact Time (24h)
+                  {tx('Kesin Saat (24s)', 'Exact Time (24h)')}
                 </label>
                 <input
                   type="time"
@@ -1245,13 +1251,13 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
 
             <div>
               <label className="block text-[10px] font-mono uppercase text-[#71717a] mb-1">
-                Slot Label / Campaign Tag
+                {tx('Slot Etiketi / Kampanya İmi', 'Slot Label / Campaign Tag')}
               </label>
               <input
                 type="text"
                 value={selectedScheduleLabel}
                 onChange={(e) => setSelectedScheduleLabel(e.target.value)}
-                placeholder="e.g. Afternoon Editorial Drop"
+                placeholder={tx('ör. Öğleden Sonra Editoryal Yayını', 'e.g. Afternoon Editorial Drop')}
                 className="w-full px-2.5 py-1.5 bg-[#0a0a0a] border border-[#262626] rounded text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
               />
             </div>
@@ -1259,7 +1265,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
             {/* Time Presets */}
             <div className="space-y-1">
               <span className="block text-[10px] font-mono uppercase text-[#71717a]">
-                Quick Slot Presets:
+                {tx('Hızlı Slot Önayarları:', 'Quick Slot Presets:')}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {TIME_PRESETS.map((preset) => (
@@ -1290,12 +1296,12 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 className="flex-1 px-3 py-2 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] font-mono text-xs uppercase tracking-wider font-semibold rounded transition cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>{selectedPost.status === 'scheduled' ? 'Update Slot Time' : 'Assign to Queue Slot'}</span>
+                <span>{selectedPost.status === 'scheduled' ? tx('Slot Saatini Güncelle', 'Update Slot Time') : tx('Kuyruk Slotuna Ata', 'Assign to Queue Slot')}</span>
               </button>
               {scheduleSavedToast && (
                 <span className="text-[11px] font-mono text-[#7cd38b] flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Saved
+                  {tx('Kaydedildi', 'Saved')}
                 </span>
               )}
             </div>
@@ -1305,7 +1311,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
           <div className="p-4 sm:p-5 bg-[#121212] border border-[#222222] rounded space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] uppercase tracking-wider text-[#71717a] font-mono">
-                Post Text Package & AI Studio
+                {tx('Post Metin Paketi & AI Stüdyo', 'Post Text Package & AI Studio')}
               </span>
               
               <div className="flex flex-wrap items-center gap-2">
@@ -1315,7 +1321,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   className="text-xs font-mono text-[#c5a880] hover:text-[#e4d4c0] flex items-center gap-1 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
-                  <span>{inlineEditMode ? 'Cancel Edit' : 'Inline Edit'}</span>
+                  <span>{inlineEditMode ? tx('Düzenlemeyi İptal Et', 'Cancel Edit') : tx('Satır İçi Düzenle', 'Inline Edit')}</span>
                 </button>
                 {onEditPost && (
                   <button
@@ -1324,7 +1330,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                     className="text-xs font-mono text-[#8e8d8a] hover:text-[#f4f3ef] flex items-center gap-1 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#c5a880]" />
-                    <span>Studio Modal</span>
+                    <span>{tx('Stüdyo Penceresi', 'Studio Modal')}</span>
                   </button>
                 )}
                 <button
@@ -1333,7 +1339,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   className="text-xs font-mono text-[#8e8d8a] hover:text-[#f4f3ef] flex items-center gap-1 cursor-pointer"
                 >
                   {copiedCaption ? <Check className="w-3.5 h-3.5 text-[#7cd38b]" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCaption ? 'Copied' : 'Copy'}</span>
+                  <span>{copiedCaption ? tx('Kopyalandı', 'Copied') : tx('Kopyala', 'Copy')}</span>
                 </button>
               </div>
             </div>
@@ -1343,9 +1349,9 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <div className="flex items-center justify-between text-[10px] font-mono text-[#71717a]">
                 <span className="flex items-center gap-1 text-[#c5a880]">
                   <Sparkles className="w-3 h-3" />
-                  1-Click AI Re-write by Tone:
+                  {tx('Tona Göre Tek Tıkla AI Yeniden Yazım (İngilizce):', '1-Click AI Re-write by Tone:')}
                 </span>
-                {quickAiLoading && <span className="animate-pulse text-[#c5a880]">Drafting...</span>}
+                {quickAiLoading && <span className="animate-pulse text-[#c5a880]">{tx('Yazılıyor...', 'Drafting...')}</span>}
               </div>
 
               <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px] font-mono">
@@ -1355,7 +1361,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   onClick={() => handleQuickToneRegenerate('archival')}
                   className="p-1.5 rounded bg-[#141414] hover:bg-[#1a1a1a] border border-[#222222] hover:border-[#c5a880] text-[#d4d4d8] text-left transition cursor-pointer truncate"
                 >
-                  Archival Monograph
+                  {tx('Arşiv Monografisi', 'Archival Monograph')}
                 </button>
                 <button
                   type="button"
@@ -1363,7 +1369,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   onClick={() => handleQuickToneRegenerate('poetic')}
                   className="p-1.5 rounded bg-[#141414] hover:bg-[#1a1a1a] border border-[#222222] hover:border-[#c5a880] text-[#d4d4d8] text-left transition cursor-pointer truncate"
                 >
-                  Poetic Chiaroscuro
+                  {tx('Şiirsel Chiaroscuro', 'Poetic Chiaroscuro')}
                 </button>
                 <button
                   type="button"
@@ -1371,7 +1377,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   onClick={() => handleQuickToneRegenerate('minimal')}
                   className="p-1.5 rounded bg-[#141414] hover:bg-[#1a1a1a] border border-[#222222] hover:border-[#c5a880] text-[#d4d4d8] text-left transition cursor-pointer truncate"
                 >
-                  Minimal Modern
+                  {tx('Minimal Modern', 'Minimal Modern')}
                 </button>
                 <button
                   type="button"
@@ -1379,7 +1385,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   onClick={() => handleQuickToneRegenerate('couture')}
                   className="p-1.5 rounded bg-[#141414] hover:bg-[#1a1a1a] border border-[#222222] hover:border-[#c5a880] text-[#d4d4d8] text-left transition cursor-pointer truncate"
                 >
-                  Haute Couture
+                  {tx('Haute Couture', 'Haute Couture')}
                 </button>
               </div>
             </div>
@@ -1389,7 +1395,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
               <div className="space-y-3">
                 <div>
                   <label className="block text-[10px] font-mono uppercase text-[#8e8d8a] mb-1">
-                    Editorial Caption
+                    {tx('Instagram Açıklaması (EN)', 'Editorial Caption')}
                   </label>
                   <textarea
                     rows={5}
@@ -1400,7 +1406,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-[10px] font-mono uppercase text-[#8e8d8a] mb-1">
-                    Hashtags (space separated)
+                    {tx('Hashtagler (boşlukla ayrılmış)', 'Hashtags (space separated)')}
                   </label>
                   <input
                     type="text"
@@ -1415,7 +1421,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   className="w-full py-2 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] font-mono text-xs uppercase tracking-wider font-semibold rounded transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>Save Caption Changes</span>
+                  <span>{tx('Açıklama Değişikliklerini Kaydet', 'Save Caption Changes')}</span>
                 </button>
               </div>
             ) : (
@@ -1427,8 +1433,8 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
             )}
 
             <div className="flex items-center justify-between text-[11px] text-[#71717a] font-mono pt-1">
-              <span>{selectedPost.caption.length} chars</span>
-              <span>{selectedPost.hashtags.length} hashtags</span>
+              <span>{selectedPost.caption.length} {tx('karakter', 'chars')}</span>
+              <span>{selectedPost.hashtags.length} {tx('hashtag', 'hashtags')}</span>
             </div>
           </div>
 
@@ -1436,30 +1442,33 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
           <div className="p-4 sm:p-5 bg-[#121212] border border-[#222222] rounded space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] uppercase tracking-wider text-[#71717a] font-mono">
-                Rights Status (Informational)
+                {tx('Hak Durumu (Bilgilendirme)', 'Rights Status (Informational)')}
               </span>
               {selectedPost.rightsStatus === 'verified' ? (
                 <span className="inline-flex items-center gap-1 text-xs text-[#7cd38b] font-mono">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified Rights
+                  {tx('Doğrulanmış Haklar', 'Verified Rights')}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs text-[#c5a880] font-mono">
                   <ShieldAlert className="w-3.5 h-3.5" />
-                  {selectedPost.rightsStatus.toUpperCase()} (Publishing Unlocked)
+                  {formatRightsStatus(selectedPost.rightsStatus)} ({tx('Yayınlama Açık', 'Publishing Unlocked')})
                 </span>
               )}
             </div>
 
             <div className="text-xs font-mono space-y-2 text-[#a1a1aa] pt-2 border-t border-[#1e1e1e] break-words">
               <div>
-                <span className="text-[#71717a] block text-[10px]">License Framework:</span>
+                <span className="text-[#71717a] block text-[10px]">{tx('Lisans Çerçevesi:', 'License Framework:')}</span>
                 <span className="text-[#f4f3ef]">{selectedPost.rightsVerificationRecord.sourceLicense}</span>
               </div>
               <div>
-                <span className="text-[#71717a] block text-[10px]">Curatorial Policy:</span>
+                <span className="text-[#71717a] block text-[10px]">{tx('Kürasyon Politikası:', 'Curatorial Policy:')}</span>
                 <span className="text-[#d4d4d8] text-[11px] font-sans">
-                  Rights status is displayed for reference only. Full scheduling and Instagram publishing are unlocked for all packages.
+                  {tx(
+                    'Hak durumu yalnızca bilgilendirme amaçlı gösterilir. Tüm paketler için zamanlama ve Instagram yayınlama açıktır.',
+                    'Rights status is displayed for reference only. Full scheduling and Instagram publishing are unlocked for all packages.'
+                  )}
                 </span>
               </div>
             </div>
@@ -1474,7 +1483,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                     className="px-3 py-1.5 bg-[#1c1c1c] hover:bg-[#242424] border border-[#333333] rounded text-xs font-mono text-[#7cd38b] cursor-pointer flex items-center gap-1"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Mark Rights Verified</span>
+                    <span>{tx('Hakları Doğrulandı İşaretle', 'Mark Rights Verified')}</span>
                   </button>
                 )}
                 <button
@@ -1484,7 +1493,7 @@ export const PostPackagesView: React.FC<PostPackagesViewProps> = ({
                   className="flex-1 px-3 py-1.5 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] rounded text-xs font-mono font-semibold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Publish Now</span>
+                  <span>{tx('Hemen Yayınla', 'Publish Now')}</span>
                 </button>
               </div>
             )}

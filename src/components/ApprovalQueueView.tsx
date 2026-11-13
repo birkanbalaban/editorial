@@ -17,6 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { computeContentHash, needsReapproval } from '../lib/publishingRules';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ApprovalQueueViewProps {
   posts: EditorialPost[];
@@ -37,6 +38,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
   onOpenCaptionEditor,
   isProcessingAction,
 }) => {
+  const { tx, formatPostStatus } = useLanguage();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeSlideIndex, setActiveSlideIndex] = useState<Record<string, number>>({});
 
@@ -100,15 +102,18 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#222222] pb-6">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-[#c5a880] mb-1 font-mono">
-            <span>Stage 2 · Editorial Review Queue</span>
+            <span>{tx('Aşama 2 · Editöryal İnceleme Kuyruğu', 'Stage 2 · Editorial Review Queue')}</span>
             <span>·</span>
-            <span>Multi-Photo Carousel Review & Sign-Off</span>
+            <span>{tx('Çoklu Fotoğraf Carousel İnceleme & Onay', 'Multi-Photo Carousel Review & Sign-Off')}</span>
           </div>
           <h1 className="font-editorial text-3xl md:text-4xl text-[#f4f3ef] font-normal tracking-tight">
-            Approval Queue & Carousel Sign-Off
+            {tx('Onay Kuyruğu & Carousel İmzası', 'Approval Queue & Carousel Sign-Off')}
           </h1>
           <p className="text-sm text-[#8e8d8a] mt-1 max-w-2xl font-sans">
-            Review the multi-photo Carousel packages sent from Daily Selection or AI Search Engine. Verify or adjust the selected shoot frames below and click Approve to move them to Post Packages.
+            {tx(
+              'Günlük Seçim veya AI Arama Motorundan gönderilen çoklu fotoğraf Carousel paketlerini inceleyin. Seçili çekim karelerini aşağıdan doğrulayıp düzenleyin ve Post Paketlerine taşımak için Onayla butonuna tıklayın.',
+              'Review the multi-photo Carousel packages sent from Daily Selection or AI Search Engine. Verify or adjust the selected shoot frames below and click Approve to move them to Post Packages.'
+            )}
           </p>
         </div>
 
@@ -123,7 +128,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
             ) : (
               <Square className="w-4 h-4" />
             )}
-            <span>Select All ({queuePosts.length})</span>
+            <span>{tx('Tümünü Seç', 'Select All')} ({queuePosts.length})</span>
           </button>
 
           <button
@@ -132,7 +137,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
             className="px-4 py-2 bg-[#f4f3ef] text-[#0a0a0a] disabled:opacity-40 text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>Bulk Approve ({selectedIds.size})</span>
+            <span>{tx('Toplu Onayla', 'Bulk Approve')} ({selectedIds.size})</span>
           </button>
 
           <button
@@ -141,7 +146,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
             className="px-3.5 py-2 bg-[#1e1414] border border-[#3b1f1f] text-[#ef4444] disabled:opacity-40 text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
           >
             <X className="w-3.5 h-3.5" />
-            <span>Reject ({selectedIds.size})</span>
+            <span>{tx('Reddet', 'Reject')} ({selectedIds.size})</span>
           </button>
         </div>
       </div>
@@ -155,12 +160,15 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#f4f3ef]">
-                <span>Agent 2 · Chief Curator & Quality Auditor AI</span>
+                <span>{tx('Ajan 2 · Baş Küratör & Kalite Denetçi AI', 'Agent 2 · Chief Curator & Quality Auditor AI')}</span>
                 <span>·</span>
-                <span className="text-[#c5a880]">Threshold: ≥{threshold}/100</span>
+                <span className="text-[#c5a880]">{tx('Eşik', 'Threshold')}: ≥{threshold}/100</span>
               </div>
               <p className="text-xs text-[#8e8d8a] mt-0.5 font-sans">
-                Run Agent 2 across all pending candidates to generate critical curatorial verdicts, or let Agent 2 automatically approve all candidates scoring ≥{threshold}/100.
+                {tx(
+                  `Bekleyen tüm adaylar üzerinde Ajan 2'yi çalıştırarak eleştirel kürasyon kararları üretin veya ≥${threshold}/100 puan alan adayların otomatik onaylanmasını sağlayın.`,
+                  `Run Agent 2 across all pending candidates to generate critical curatorial verdicts, or let Agent 2 automatically approve all candidates scoring ≥${threshold}/100.`
+                )}
               </p>
             </div>
           </div>
@@ -173,7 +181,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
               className="px-3.5 py-2 bg-[#1c1c1c] hover:bg-[#242424] border border-[#333333] rounded text-xs font-mono text-[#f4f3ef] transition cursor-pointer flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#c5a880] ${isProcessingAction ? 'animate-spin' : ''}`} />
-              <span>Run Agent 2 Audit Only</span>
+              <span>{tx('Yalnızca Ajan 2 Denetimi', 'Run Agent 2 Audit Only')}</span>
             </button>
             <button
               type="button"
@@ -182,7 +190,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
               className="px-4 py-2 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] rounded text-xs font-mono font-semibold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>AI Audit & Auto-Approve (≥{threshold})</span>
+              <span>{tx(`AI Denetimi & Oto-Onay (≥${threshold})`, `AI Audit & Auto-Approve (≥${threshold})`)}</span>
             </button>
           </div>
         </div>
@@ -192,7 +200,10 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
       {queuePosts.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-[#222222] rounded bg-[#121212]">
           <p className="text-sm text-[#8e8d8a]">
-            No posts in the Approval Queue yet. Select shoot photographs in Daily Selections or AI Search Engine and click "Send to Approval Queue".
+            {tx(
+              'Onay Kuyruğunda henüz gönderi yok. Günlük Seçim veya AI Arama Motorunda çekim fotoğraflarını seçip "Onay Kuyruğuna Gönder" butonuna tıklayın.',
+              'No posts in the Approval Queue yet. Select shoot photographs in Daily Selections or AI Search Engine and click "Send to Approval Queue".'
+            )}
           </p>
         </div>
       ) : (
@@ -235,7 +246,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-[#71717a]">
-                        No Image Preview
+                        {tx('Görsel Önizleme Yok', 'No Image Preview')}
                       </div>
                     )}
 
@@ -288,7 +299,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       <div className="bg-[#0a0a0a]/90 backdrop-blur-md px-2 py-1 rounded border border-[#c5a880]/40 text-[11px] font-mono text-[#c5a880] flex items-center gap-1">
                         <Layers className="w-3 h-3" />
                         <span>
-                          Frame {currentSlide + 1}/{selectedFrames.length}
+                          {tx('Kare', 'Frame')} {currentSlide + 1}/{selectedFrames.length}
                         </span>
                       </div>
                       <div className="bg-[#0a0a0a]/90 backdrop-blur-md px-2 py-1 rounded border border-[#262626] text-[11px] font-mono text-[#f4f3ef] font-semibold">
@@ -301,7 +312,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                             : 'bg-[#0a0a0a]/90 border-[#262626] text-[#f4f3ef]'
                         }`}
                       >
-                        {post.status === 'selected' ? 'Pending Approval' : post.status}
+                        {post.status === 'selected' ? tx('Onay Bekliyor', 'Pending Approval') : formatPostStatus(post.status)}
                       </div>
                     </div>
 
@@ -310,7 +321,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       <div className="absolute bottom-3 left-3 right-3 bg-[#450a0a]/90 backdrop-blur-md border border-[#7f1d1d] px-3 py-1.5 rounded flex items-center gap-2 text-xs text-[#fca5a5]">
                         <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
                         <span className="text-[11px] font-sans">
-                          Content altered post-approval. Renewed sign-off recommended.
+                          {tx('Onay sonrası içerik değiştirildi. Yeniden onay önerilir.', 'Content altered post-approval. Renewed sign-off recommended.')}
                         </span>
                       </div>
                     )}
@@ -320,9 +331,9 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                   <div className="p-3.5 bg-[#0e0e0e] border-b border-[#1e1e1e] space-y-2">
                     <div className="flex items-center justify-between text-[10px] font-mono uppercase">
                       <span className="text-[#c5a880]">
-                        Carousel Package ({selectedFrames.length} Selected / {shootGallery.length} in Shoot)
+                        {tx('Carousel Paketi', 'Carousel Package')} ({selectedFrames.length} {tx('Seçili', 'Selected')} / {shootGallery.length} {tx('Çekimde', 'in Shoot')})
                       </span>
-                      <span className="text-[#8e8d8a]">Click to add/remove frames</span>
+                      <span className="text-[#8e8d8a]">{tx('Kare eklemek/kaldırmak için tıklayın', 'Click to add/remove frames')}</span>
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
@@ -363,10 +374,10 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                               }`}
                             >
                               {orderIdx === 0
-                                ? '1. Cover'
+                                ? tx('1. Kapak', '1. Cover')
                                 : isFrameSelected
-                                ? `${orderIdx + 1}. Frame`
-                                : '+ Add'}
+                                ? `${orderIdx + 1}. ${tx('Kare', 'Frame')}`
+                                : tx('+ Ekle', '+ Add')}
                             </span>
                             {isFrameSelected && orderIdx > 0 && (
                               <button
@@ -377,7 +388,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                                 }}
                                 className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-[#0a0a0a]/90 border border-[#c5a880]/40 text-[8px] font-mono text-[#c5a880] cursor-pointer"
                               >
-                                Make #1
+                                {tx('#1 Yap', 'Make #1')}
                               </button>
                             )}
                           </div>
@@ -404,7 +415,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                           className="text-[#c5a880] hover:text-[#f4f3ef] inline-flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
-                          <span>Verify Source</span>
+                          <span>{tx('Kaynağı Doğrula', 'Verify Source')}</span>
                         </a>
                       )}
                     </div>
@@ -412,7 +423,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       {post.title}
                     </h3>
                     <p className="text-xs text-[#a1a1aa] font-sans line-clamp-1">
-                      <span className="text-[#71717a]">Author / Photo:</span> {post.photographer}
+                      <span className="text-[#71717a]">{tx('Yazar / Fotoğraf:', 'Author / Photo:')}</span> {post.photographer}
                     </p>
 
                     {/* Agent 2 Audit Report Box */}
@@ -420,14 +431,14 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                       <div className="flex items-center justify-between text-[10px] font-mono uppercase">
                         <span className="text-[#c5a880] flex items-center gap-1">
                           <Bot className="w-3 h-3" />
-                          Agent 2 Verdict
+                          {tx('Ajan 2 Kararı', 'Agent 2 Verdict')}
                         </span>
                         <span className={passesThreshold ? 'text-[#a3e635]' : 'text-[#facc15]'}>
                           {post.aiAuditReport?.verdict === 'approved_by_ai'
-                            ? 'AI AUTO-APPROVED'
+                            ? tx('AI OTO-ONAYLI', 'AI AUTO-APPROVED')
                             : passesThreshold
-                            ? 'RECOMMENDED'
-                            : 'REVIEW SUGGESTED'}
+                            ? tx('ÖNERİLEN', 'RECOMMENDED')
+                            : tx('İNCELEME ÖNERİLİR', 'REVIEW SUGGESTED')}
                         </span>
                       </div>
                       <p className="text-[11px] text-[#d4d4d8] font-sans line-clamp-2 leading-relaxed">
@@ -444,17 +455,17 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                         className="px-2.5 py-1.5 text-xs text-[#8e8d8a] hover:text-[#f4f3ef] bg-[#181818] border border-[#262626] rounded transition cursor-pointer flex items-center gap-1"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit Copy</span>
+                        <span>{tx('Metni Düzenle', 'Edit Copy')}</span>
                       </button>
 
                       <button
                         onClick={() => onAction(post.id, 'publish_now')}
                         disabled={isProcessingAction}
                         className="px-2.5 py-1.5 text-xs text-[#f4f3ef] hover:border-[#c5a880] bg-[#181818] border border-[#262626] rounded transition cursor-pointer flex items-center gap-1"
-                        title="Publish Immediately to Instagram"
+                        title={tx("Instagram'a Hemen Yayınla", 'Publish Immediately to Instagram')}
                       >
                         <Send className="w-3 h-3 text-[#c5a880]" />
-                        <span>Publish</span>
+                        <span>{tx('Yayınla', 'Publish')}</span>
                       </button>
                     </div>
 
@@ -463,7 +474,7 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                         onClick={() => onAction(post.id, 'reject')}
                         disabled={isProcessingAction}
                         className="p-1.5 text-xs text-[#8e8d8a] hover:text-[#ef4444] bg-[#181818] border border-[#262626] rounded transition cursor-pointer"
-                        title="Reject Post"
+                        title={tx('Gönderiyi Reddet', 'Reject Post')}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -480,8 +491,8 @@ export const ApprovalQueueView: React.FC<ApprovalQueueViewProps> = ({
                         <Check className="w-3.5 h-3.5" />
                         <span>
                           {isApproved && !hasMaterialChange
-                            ? `Approved (${selectedFrames.length} Frames)`
-                            : `Approve (${selectedFrames.length} Frames) → Post Packages`}
+                            ? tx(`Onaylandı (${selectedFrames.length} Kare)`, `Approved (${selectedFrames.length} Frames)`)
+                            : tx(`Onayla (${selectedFrames.length} Kare) → Post Paketleri`, `Approve (${selectedFrames.length} Frames) → Post Packages`)}
                         </span>
                       </button>
                     </div>

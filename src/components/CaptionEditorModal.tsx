@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { EditorialPost } from '../types/editorial';
-import { 
-  X, 
-  Check, 
-  Sparkles, 
-  RefreshCw, 
-  BookOpen, 
-  Feather, 
-  Minus, 
-  Scissors, 
-  Copy, 
+import {
+  X,
+  Check,
+  Sparkles,
+  RefreshCw,
+  BookOpen,
+  Feather,
+  Minus,
+  Scissors,
   Info,
-  Layers
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CaptionEditorModalProps {
   post: EditorialPost | null;
@@ -29,10 +28,9 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
   onSave,
   isProcessing,
 }) => {
-  if (!post) return null;
-
-  const [caption, setCaption] = useState(post.caption);
-  const [hashtagsStr, setHashtagsStr] = useState(post.hashtags.join(' '));
+  const { tx } = useLanguage();
+  const [caption, setCaption] = useState(post?.caption ?? '');
+  const [hashtagsStr, setHashtagsStr] = useState(post ? post.hashtags.join(' ') : '');
   const [selectedTone, setSelectedTone] = useState<CaptionTone>('archival');
   const [customNotes, setCustomNotes] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,10 +38,21 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
   const [generationFeedback, setGenerationFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    setCaption(post.caption);
-    setHashtagsStr(post.hashtags.join(' '));
-    setGenerationFeedback(null);
+    if (post) {
+      setCaption(post.caption);
+      setHashtagsStr(post.hashtags.join(' '));
+      setGenerationFeedback(null);
+    }
   }, [post]);
+
+  if (!post) return null;
+
+  const toneLabelMap: Record<CaptionTone, string> = {
+    archival: tx('Arşivsel Monografi', 'Archival Monograph'),
+    poetic: tx('Şiirsel Chiaroscuro', 'Poetic Chiaroscuro'),
+    minimal: tx('Minimal Modern', 'Minimal Modern'),
+    couture: tx('Haute Couture Editoryal', 'Haute Couture Editorial'),
+  };
 
   const handleRegenerateWithAi = async (overrideTone?: CaptionTone) => {
     const activeTone = overrideTone || selectedTone;
@@ -65,16 +74,21 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
 
       const data = await res.json();
       if (!res.ok) {
-        setGenerationFeedback(data.error || 'Failed to regenerate caption.');
+        setGenerationFeedback(data.error || tx('Açıklama metni yeniden oluşturulamadı.', 'Failed to regenerate caption.'));
       } else {
         setCaption(data.caption);
         if (Array.isArray(data.hashtags)) {
           setHashtagsStr(data.hashtags.join(' '));
         }
-        setGenerationFeedback(`Draft regenerated in ${activeTone.toUpperCase()} tone.`);
+        setGenerationFeedback(
+          tx(
+            `İngilizce taslak "${toneLabelMap[activeTone]}" tonunda yeniden oluşturuldu.`,
+            `Draft regenerated in ${activeTone.toUpperCase()} tone.`
+          )
+        );
       }
     } catch (e: any) {
-      setGenerationFeedback(e.message || 'Network error.');
+      setGenerationFeedback(e.message || tx('Ağ hatası.', 'Network error.'));
     } finally {
       setIsGenerating(false);
     }
@@ -94,47 +108,58 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
   const toneOptions: { id: CaptionTone; label: string; icon: any; summary: string }[] = [
     {
       id: 'archival',
-      label: 'Archival Monograph',
+      label: toneLabelMap.archival,
       icon: BookOpen,
-      summary: 'Museum-grade historical documentation, structured credits, austere reverence.',
+      summary: tx(
+        'Müze düzeyinde tarihsel dokümantasyon, yapılandırılmış künye, sade saygın üslup.',
+        'Museum-grade historical documentation, structured credits, austere reverence.'
+      ),
     },
     {
       id: 'poetic',
-      label: 'Poetic Chiaroscuro',
+      label: toneLabelMap.poetic,
       icon: Feather,
-      summary: 'Cinematic prose exploring shadow geometry, film grain, and emotional silence.',
+      summary: tx(
+        'Gölge geometrisi, film gren dokusu ve duygusal sessizliği işleyen sinematik düzyazı.',
+        'Cinematic prose exploring shadow geometry, film grain, and emotional silence.'
+      ),
     },
     {
       id: 'minimal',
-      label: 'Minimal Modern',
+      label: toneLabelMap.minimal,
       icon: Minus,
-      summary: 'Brutalist, concise, zero adjectives, pure high-fashion data.',
+      summary: tx(
+        'Brütalist, özlü, sıfatsız, saf yüksek moda verisi.',
+        'Brutalist, concise, zero adjectives, pure high-fashion data.'
+      ),
     },
     {
       id: 'couture',
-      label: 'Haute Couture Editorial',
+      label: toneLabelMap.couture,
       icon: Scissors,
-      summary: 'Textile weight critique, sculptural draping silhouettes, atelier lineage.',
+      summary: tx(
+        'Kumaş ağırlığı eleştirisi, heykelsi drapaj silüetleri, atölye soy kütüğü.',
+        'Textile weight critique, sculptural draping silhouettes, atelier lineage.'
+      ),
     },
   ];
 
   const charCount = caption.length;
-  const tagCount = hashtagsStr.split(/\s+/).filter(t => t.trim().length > 1).length;
+  const tagCount = hashtagsStr.split(/\s+/).filter((t) => t.trim().length > 1).length;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-[#121212] border border-[#2a2a2a] rounded-lg w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200 text-[#f4f3ef]">
-        
         {/* Modal Header */}
         <div className="p-5 border-b border-[#222222] bg-[#141414] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#c5a880]">
-              <span>Editorial Copywriting Studio</span>
+              <span>{tx('Editoryal Metin Yazarlığı Stüdyosu', 'Editorial Copywriting Studio')}</span>
               <span>·</span>
-              <span>Gemini 3.8 Flash Assisted</span>
+              <span>{tx('Gemini 3.8 Flash Destekli (EN Çıktı)', 'Gemini 3.8 Flash Assisted')}</span>
             </div>
             <h3 className="font-editorial text-2xl text-[#f4f3ef] font-normal mt-0.5">
-              Edit Caption & AI Regeneration
+              {tx('Açıklamayı Düzenle & AI ile Yeniden Üret', 'Edit Caption & AI Regeneration')}
             </h3>
           </div>
           <button
@@ -150,10 +175,10 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#c5a880]">
               <Sparkles className="w-4 h-4 text-[#c5a880]" />
-              <span>AI Multi-Tone Regeneration Engine</span>
+              <span>{tx('AI Çok Tonlu Yeniden Üretim Motoru', 'AI Multi-Tone Regeneration Engine')}</span>
             </div>
             <span className="text-[11px] font-mono text-[#8e8d8a]">
-              Click any tone to re-draft immediately
+              {tx('Anında İngilizce taslak için bir tona tıklayın', 'Click any tone to re-draft immediately')}
             </span>
           </div>
 
@@ -190,7 +215,10 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
           <div className="flex flex-col sm:flex-row gap-2 pt-1">
             <input
               type="text"
-              placeholder="Optional curator directive (e.g. Highlight Lotta Volkova styling and architectural framing)..."
+              placeholder={tx(
+                'Opsiyonel küratör notu (örn. Lotta Volkova stylingini ve mimari kadrajı vurgula)...',
+                'Optional curator directive (e.g. Highlight Lotta Volkova styling and architectural framing)...'
+              )}
               value={customNotes}
               onChange={(e) => setCustomNotes(e.target.value)}
               className="flex-1 bg-[#161616] border border-[#262626] rounded px-3 py-1.5 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880] placeholder:text-[#52525b]"
@@ -202,7 +230,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
               className="px-4 py-1.5 bg-[#c5a880] hover:bg-[#d6bc96] text-[#0a0a0a] text-xs font-mono font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
-              <span>{isGenerating ? 'Drafting...' : 'Regenerate with AI'}</span>
+              <span>{isGenerating ? tx('Yazılıyor...', 'Drafting...') : tx('AI ile Yeniden Üret', 'Regenerate with AI')}</span>
             </button>
           </div>
 
@@ -225,7 +253,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
                 : 'border-transparent text-[#71717a] hover:text-[#d4d4d8]'
             }`}
           >
-            Manual Copy Editor
+            {tx('Manuel Metin Düzenleyici', 'Manual Copy Editor')}
           </button>
           <button
             type="button"
@@ -236,7 +264,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
                 : 'border-transparent text-[#71717a] hover:text-[#d4d4d8]'
             }`}
           >
-            Simulated Instagram Feed Preview
+            {tx('Simüle Instagram Akış Önizlemesi', 'Simulated Instagram Feed Preview')}
           </button>
         </div>
 
@@ -248,7 +276,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-mono text-[#71717a] uppercase mb-1">
-                    Editorial Title
+                    {tx('Editoryal Başlık', 'Editorial Title')}
                   </label>
                   <input
                     type="text"
@@ -259,7 +287,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-[11px] font-mono text-[#71717a] uppercase mb-1">
-                    Credits (Photographer & Publication)
+                    {tx('Künye (Fotoğrafçı & Yayın)', 'Credits (Photographer & Publication)')}
                   </label>
                   <input
                     type="text"
@@ -274,10 +302,10 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-mono text-[#71717a] uppercase">
-                    Instagram Editorial Caption Copy
+                    {tx('Instagram Editoryal Açıklama Metni (EN)', 'Instagram Editorial Caption Copy')}
                   </label>
                   <span className={`text-[10px] font-mono ${charCount > 2000 ? 'text-[#ef4444]' : 'text-[#71717a]'}`}>
-                    {charCount} / 2,200 chars
+                    {charCount} / 2.200 {tx('karakter', 'chars')}
                   </span>
                 </div>
                 <textarea
@@ -293,10 +321,10 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-mono text-[#71717a] uppercase">
-                    Curated Hashtags (Space separated)
+                    {tx('Kürasyon Etiketleri (Boşlukla ayrılmış · EN)', 'Curated Hashtags (Space separated)')}
                   </label>
                   <span className={`text-[10px] font-mono ${tagCount > 30 ? 'text-[#ef4444]' : 'text-[#71717a]'}`}>
-                    {tagCount} / 30 tags
+                    {tagCount} / 30 {tx('etiket', 'tags')}
                   </span>
                 </div>
                 <input
@@ -311,7 +339,10 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
               <div className="p-3 bg-[#161616] border border-[#222222] rounded text-[11px] font-mono text-[#8e8d8a] flex items-center gap-2">
                 <Info className="w-4 h-4 text-[#c5a880] shrink-0" />
                 <span>
-                  Saving updates content hash and updates package metadata. In Approval Mode, edited approved posts require re-sign-off.
+                  {tx(
+                    'Kaydetmek içerik karma değerini (hash) ve paket üst verilerini günceller. Onaylı Modda, düzenlenen onaylanmış gönderiler yeniden imza gerektirir.',
+                    'Saving updates content hash and updates package metadata. In Approval Mode, edited approved posts require re-sign-off.'
+                  )}
                 </span>
               </div>
             </>
@@ -348,7 +379,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
           {/* Footer Actions */}
           <div className="pt-4 border-t border-[#222222] flex items-center justify-between">
             <span className="text-[11px] font-mono text-[#71717a]">
-              Post ID: {post.id}
+              {tx('Gönderi ID:', 'Post ID:')} {post.id}
             </span>
 
             <div className="flex items-center gap-3">
@@ -357,7 +388,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
                 onClick={onClose}
                 className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#8e8d8a] hover:text-[#f4f3ef] transition cursor-pointer"
               >
-                Cancel
+                {tx('İptal', 'Cancel')}
               </button>
               <button
                 type="submit"
@@ -365,7 +396,7 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
                 className="px-5 py-2 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5 shadow"
               >
                 <Check className="w-4 h-4 text-[#0a0a0a]" />
-                <span>Save to Package</span>
+                <span>{tx('Pakete Kaydet', 'Save to Package')}</span>
               </button>
             </div>
           </div>
@@ -374,3 +405,4 @@ export const CaptionEditorModal: React.FC<CaptionEditorModalProps> = ({
     </div>
   );
 };
+

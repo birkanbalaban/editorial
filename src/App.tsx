@@ -24,8 +24,10 @@ import { AiResearchModal, ManualPostSubmissionPayload } from './components/AiRes
 import { AutopilotConfirmModal } from './components/AutopilotConfirmModal';
 import { AgentIntegrationModal } from './components/AgentIntegrationModal';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { useLanguage } from './i18n/LanguageContext';
 
 export default function App() {
+  const { tx, formatMode } = useLanguage();
   const [currentTab, setCurrentTab] = useState<string>('daily-selection');
   
   // App data state
@@ -169,13 +171,13 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Action failed.', 'error');
+        showToast(data.error || tx('İşlem başarısız oldu.', 'Action failed.'), 'error');
       } else {
-        showToast(`Action "${action}" succeeded.`);
+        showToast(tx(`"${action}" işlemi başarıyla tamamlandı.`, `Action "${action}" succeeded.`));
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Network error executing action.', 'error');
+      showToast(e.message || tx('İşlem sırasında ağ hatası oluştu.', 'Network error executing action.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -191,13 +193,18 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Bulk action failed.', 'error');
+        showToast(data.error || tx('Toplu işlem başarısız oldu.', 'Bulk action failed.'), 'error');
       } else {
-        showToast(`Bulk ${action} completed for ${data.count} items.`);
+        showToast(
+          tx(
+            `${data.count} öğe için toplu ${action === 'approve' ? 'onay' : 'red'} tamamlandı.`,
+            `Bulk ${action} completed for ${data.count} items.`
+          )
+        );
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Bulk execution error.', 'error');
+      showToast(e.message || tx('Toplu yürütme hatası.', 'Bulk execution error.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -213,10 +220,10 @@ export default function App() {
       const data = await res.json();
       if (res.ok && data.aiAgentConfig) {
         setAiAgentConfig(data.aiAgentConfig);
-        showToast('AI Agent configuration updated.');
+        showToast(tx('AI Ajan yapılandırması güncellendi.', 'AI Agent configuration updated.'));
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to update AI config.', 'error');
+      showToast(e.message || tx('AI yapılandırması güncellenemedi.', 'Failed to update AI config.'), 'error');
     }
   };
 
@@ -230,10 +237,15 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'AI Discovery sweep failed.', 'error');
+        showToast(data.error || tx('AI Keşif taraması başarısız oldu.', 'AI Discovery sweep failed.'), 'error');
         return null;
       } else {
-        showToast(`Agent 1 discovered & Agent 2 audited ${data.count} unique editorial(s).`);
+        showToast(
+          tx(
+            `Ajan 1 keşfetti ve Ajan 2 ${data.count} benzersiz editoryal seriyi denetledi.`,
+            `Agent 1 discovered & Agent 2 audited ${data.count} unique editorial(s).`
+          )
+        );
         await loadAllData();
         return {
           count: data.count || 0,
@@ -242,7 +254,7 @@ export default function App() {
         };
       }
     } catch (e: any) {
-      showToast(e.message || 'Error during AI discovery sweep.', 'error');
+      showToast(e.message || tx('AI keşif taraması sırasında hata.', 'Error during AI discovery sweep.'), 'error');
       return null;
     } finally {
       setIsProcessing(false);
@@ -259,13 +271,19 @@ export default function App() {
       if (res.ok) {
         showToast(
           data.removedCount > 0
-            ? `Removed ${data.removedCount} duplicate editorial(s). ${data.remainingCount} unique works in archive.`
-            : `Archive verified: 0 duplicates found (${data.remainingCount} unique works).`
+            ? tx(
+                `${data.removedCount} tekrarlayan editoryal kaldırıldı. Arşivde ${data.remainingCount} benzersiz çalışma var.`,
+                `Removed ${data.removedCount} duplicate editorial(s). ${data.remainingCount} unique works in archive.`
+              )
+            : tx(
+                `Arşiv doğrulandı: Kopya bulunamadı (${data.remainingCount} benzersiz çalışma).`,
+                `Archive verified: 0 duplicates found (${data.remainingCount} unique works).`
+              )
         );
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Deduplication failed.', 'error');
+      showToast(e.message || tx('Tekilleştirme başarısız oldu.', 'Deduplication failed.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -281,17 +299,22 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Agent 2 audit failed.', 'error');
+        showToast(data.error || tx('Ajan 2 denetimi başarısız oldu.', 'Agent 2 audit failed.'), 'error');
       } else {
         showToast(
-          `Agent 2 audited ${data.auditedCount} items${
-            data.autoApprovedCount > 0 ? ` (${data.autoApprovedCount} auto-approved)` : ''
-          }.`
+          tx(
+            `Ajan 2, ${data.auditedCount} öğeyi denetledi${
+              data.autoApprovedCount > 0 ? ` (${data.autoApprovedCount} otomatik onaylandı)` : ''
+            }.`,
+            `Agent 2 audited ${data.auditedCount} items${
+              data.autoApprovedCount > 0 ? ` (${data.autoApprovedCount} auto-approved)` : ''
+            }.`
+          )
         );
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Error during Agent 2 audit.', 'error');
+      showToast(e.message || tx('Ajan 2 denetimi sırasında hata.', 'Error during Agent 2 audit.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -303,9 +326,9 @@ export default function App() {
       const data = await res.json();
       setSettings(prev => ({ ...prev, emergencyStop: data.emergencyStop }));
       showToast(
-        data.emergencyStop 
-          ? 'EMERGENCY STOP ENGAGED. All publishing halted.' 
-          : 'Emergency stop cleared. Regular schedule restored.',
+        data.emergencyStop
+          ? tx('ACİL DURDURMA DEVREDE. Tüm yayınlar durduruldu.', 'EMERGENCY STOP ENGAGED. All publishing halted.')
+          : tx('Acil durdurma kaldırıldı. Normal program geri yüklendi.', 'Emergency stop cleared. Regular schedule restored.'),
         data.emergencyStop ? 'error' : 'success'
       );
       await loadAllData();
@@ -319,7 +342,11 @@ export default function App() {
       const res = await fetch('/api/automation/toggle', { method: 'POST' });
       const data = await res.json();
       setSettings(prev => ({ ...prev, schedulePaused: data.schedulePaused }));
-      showToast(data.schedulePaused ? 'Automated workflows paused.' : 'Automated workflows resumed.');
+      showToast(
+        data.schedulePaused
+          ? tx('Otomatik iş akışları duraklatıldı.', 'Automated workflows paused.')
+          : tx('Otomatik iş akışları devam ediyor.', 'Automated workflows resumed.')
+      );
       await loadAllData();
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -336,9 +363,9 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Stage execution failed.', 'error');
+        showToast(data.error || tx('Aşama çalıştırılamadı.', 'Stage execution failed.'), 'error');
       } else {
-        showToast(`Workflow stage executed.`);
+        showToast(tx('İş akışı aşaması çalıştırıldı.', 'Workflow stage executed.'));
         await loadAllData();
       }
     } catch (e: any) {
@@ -354,7 +381,7 @@ export default function App() {
       const res = await fetch('/api/automation/logs/clear', { method: 'POST' });
       if (res.ok) {
         setWorkflowLogs([]);
-        showToast('Automation logs cleared.');
+        showToast(tx('Otomasyon günlükleri temizlendi.', 'Automation logs cleared.'));
       }
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -373,10 +400,15 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Instagram connection failed.', 'error');
+        showToast(data.error || tx('Instagram bağlantısı başarısız oldu.', 'Instagram connection failed.'), 'error');
       } else {
         setInstagram(data.instagram);
-        showToast(`Instagram Professional Account connected as @${data.instagram.username}.`);
+        showToast(
+          tx(
+            `Instagram Profesyonel Hesabı @${data.instagram.username} olarak bağlandı.`,
+            `Instagram Professional Account connected as @${data.instagram.username}.`
+          )
+        );
         await loadAllData();
       }
     } catch (e: any) {
@@ -392,7 +424,7 @@ export default function App() {
       const res = await fetch('/api/instagram/disconnect', { method: 'POST' });
       const data = await res.json();
       setInstagram(data.instagram);
-      showToast('Instagram account disconnected.');
+      showToast(tx('Instagram hesabı bağlantısı kesildi.', 'Instagram account disconnected.'));
       await loadAllData();
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -411,10 +443,10 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Failed to update settings.', 'error');
+        showToast(data.error || tx('Ayarlar güncellenemedi.', 'Failed to update settings.'), 'error');
       } else {
         setSettings(data.settings);
-        showToast('Settings saved successfully.');
+        showToast(tx('Ayarlar başarıyla kaydedildi.', 'Settings saved successfully.'));
         await loadAllData();
       }
     } catch (e: any) {
@@ -434,15 +466,20 @@ export default function App() {
       });
       const resData = await res.json();
       if (!res.ok) {
-        showToast(resData.error || 'Failed to add editorial post.', 'error');
+        showToast(resData.error || tx('Editoryal gönderi eklenemedi.', 'Failed to add editorial post.'), 'error');
       } else {
         const destLabel =
           data.targetStatus === 'approved'
-            ? 'Post Packages'
+            ? tx('Post Paketleri', 'Post Packages')
             : data.targetStatus === 'selected'
-            ? 'Approval Queue'
-            : 'Daily Selection';
-        showToast(`Created "${resData.post.title}" (${resData.post.imageUrls.length} frames) → ${destLabel}`);
+            ? tx('Onay Kuyruğu', 'Approval Queue')
+            : tx('Günlük Seçim', 'Daily Selection');
+        showToast(
+          tx(
+            `"${resData.post.title}" (${resData.post.imageUrls.length} kare) oluşturuldu → ${destLabel}`,
+            `Created "${resData.post.title}" (${resData.post.imageUrls.length} frames) → ${destLabel}`
+          )
+        );
         await loadAllData();
       }
     } catch (e: any) {
@@ -467,13 +504,13 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Failed to add RSS feed.', 'error');
+        showToast(data.error || tx('RSS kaynağı eklenemedi.', 'Failed to add RSS feed.'), 'error');
       } else {
         setRssFeeds(data.feeds || []);
-        showToast(`Added RSS feed "${feed.name}".`);
+        showToast(tx(`"${feed.name}" RSS kaynağı eklendi.`, `Added RSS feed "${feed.name}".`));
       }
     } catch (e: any) {
-      showToast(e.message || 'Error adding RSS feed.', 'error');
+      showToast(e.message || tx('RSS kaynağı eklenirken hata.', 'Error adding RSS feed.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -489,10 +526,10 @@ export default function App() {
       const data = await res.json();
       if (res.ok) {
         setRssFeeds(data.feeds || []);
-        showToast(enabled ? 'RSS feed activated.' : 'RSS feed paused.');
+        showToast(enabled ? tx('RSS kaynağı etkinleştirildi.', 'RSS feed activated.') : tx('RSS kaynağı duraklatıldı.', 'RSS feed paused.'));
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to update RSS feed.', 'error');
+      showToast(e.message || tx('RSS kaynağı güncellenemedi.', 'Failed to update RSS feed.'), 'error');
     }
   };
 
@@ -504,10 +541,10 @@ export default function App() {
       const data = await res.json();
       if (res.ok) {
         setRssFeeds(data.feeds || []);
-        showToast('RSS feed removed.');
+        showToast(tx('RSS kaynağı kaldırıldı.', 'RSS feed removed.'));
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to remove RSS feed.', 'error');
+      showToast(e.message || tx('RSS kaynağı kaldırılamadı.', 'Failed to remove RSS feed.'), 'error');
     }
   };
 
@@ -522,10 +559,15 @@ export default function App() {
       const data = await res.json();
       if (res.ok) {
         setExcludedKeywords(data.excludedKeywords || []);
-        showToast(`Updated ${data.excludedKeywords?.length || 0} exclusion keyword(s).`);
+        showToast(
+          tx(
+            `${data.excludedKeywords?.length || 0} hariç tutulan anahtar kelime güncellendi.`,
+            `Updated ${data.excludedKeywords?.length || 0} exclusion keyword(s).`
+          )
+        );
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to update exclusion keywords.', 'error');
+      showToast(e.message || tx('Hariç tutma kelimeleri güncellenemedi.', 'Failed to update exclusion keywords.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -550,15 +592,18 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || 'Failed to sync Instagram insights.', 'error');
+        showToast(data.error || tx('Instagram istatistikleri senkronize edilemedi.', 'Failed to sync Instagram insights.'), 'error');
       } else {
         setEngagementPoints(data.points || []);
         showToast(
-          `Synced live telemetry for ${data.syncedCount} editorial release(s) via Meta Graph API.`
+          tx(
+            `Meta Graph API üzerinden ${data.syncedCount} yayın için canlı veriler eşitlendi.`,
+            `Synced live telemetry for ${data.syncedCount} editorial release(s) via Meta Graph API.`
+          )
         );
       }
     } catch (e: any) {
-      showToast(e.message || 'Error syncing Instagram insights.', 'error');
+      showToast(e.message || tx('Instagram istatistikleri eşitlenirken hata.', 'Error syncing Instagram insights.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -570,11 +615,11 @@ export default function App() {
         method: 'DELETE',
       });
       if (res.ok) {
-        showToast('Learning signal removed and ranking weights recalculated.');
+        showToast(tx('Öğrenme sinyali silindi ve sıralama ağırlıkları yeniden hesaplandı.', 'Learning signal removed and ranking weights recalculated.'));
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to remove signal.', 'error');
+      showToast(e.message || tx('Sinyal silinemedi.', 'Failed to remove signal.'), 'error');
     }
   };
 
@@ -585,11 +630,11 @@ export default function App() {
         method: 'POST',
       });
       if (res.ok) {
-        showToast('All learning weights reset to neutral baseline.');
+        showToast(tx('Tüm öğrenme ağırlıkları nötr başlangıç seviyesine sıfırlandı.', 'All learning weights reset to neutral baseline.'));
         await loadAllData();
       }
     } catch (e: any) {
-      showToast(e.message || 'Failed to clear signals.', 'error');
+      showToast(e.message || tx('Sinyaller temizlenemedi.', 'Failed to clear signals.'), 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -643,6 +688,7 @@ export default function App() {
             posts={allPosts}
             aiConfig={aiAgentConfig}
             rssFeeds={rssFeeds}
+            workflowLogs={workflowLogs}
             onUpdateAiConfig={handleUpdateAiConfig}
             onDiscoverBatch={handleDiscoverBatch}
             onDeduplicate={handleDeduplicate}
@@ -788,12 +834,17 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="text-[#c5a880] uppercase tracking-wider font-semibold">THE EDITORIAL INDEX</span>
             <span>·</span>
-            <span>Autonomous High Fashion Curation & Archival Publishing</span>
+            <span>
+              {tx(
+                'Otonom Yüksek Moda Kürasyonu & Arşiv Yayıncılığı',
+                'Autonomous High Fashion Curation & Archival Publishing'
+              )}
+            </span>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <span>Mode: {settings.mode}</span>
+            <span>{tx('Mod', 'Mode')}: {formatMode(settings.mode)}</span>
             <span>·</span>
-            <span>Timezone: Europe/Istanbul</span>
+            <span>{tx('Saat Dilimi', 'Timezone')}: Europe/Istanbul</span>
             <span>·</span>
             <span>Meta Graph API v21.0</span>
           </div>

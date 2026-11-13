@@ -13,6 +13,7 @@ import {
   HelpCircle,
   ExternalLink
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface InstagramCredentialsCardProps {
   config: InstagramAccountConfig;
@@ -29,6 +30,7 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
   isProcessing,
   compact = false,
 }) => {
+  const { tx } = useLanguage();
   const [showForm, setShowForm] = useState(!config.connected);
   const [tokenInput, setTokenInput] = useState('');
   const [accountIdInput, setAccountIdInput] = useState(config.accountId || '');
@@ -42,7 +44,12 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
     setSuccessNotice('');
 
     if (!tokenInput.trim() || !accountIdInput.trim()) {
-      setErrorMessage('Please enter both the Instagram Account ID and the System User Access Token.');
+      setErrorMessage(
+        tx(
+          'Lütfen hem Instagram Hesap Kimliğini hem de System User Access Token bilgisini girin.',
+          'Please enter both the Instagram Account ID and the System User Access Token.'
+        )
+      );
       return;
     }
 
@@ -51,11 +58,11 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
         accessToken: tokenInput.trim(), 
         accountId: accountIdInput.trim() 
       });
-      setSuccessNotice('Account successfully verified and connected.');
+      setSuccessNotice(tx('Hesap başarıyla doğrulandı ve bağlandı.', 'Account successfully verified and connected.'));
       setTokenInput('');
       setShowForm(false);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Connection failed. Verify token permissions.');
+      setErrorMessage(err?.message || tx('Bağlantı başarısız oldu. Token izinlerini doğrulayın.', 'Connection failed. Verify token permissions.'));
     }
   };
 
@@ -64,10 +71,10 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
     setSuccessNotice('');
     try {
       await onConnect({ mockConnected: true });
-      setSuccessNotice('Demo Sandbox account linked successfully.');
+      setSuccessNotice(tx('Demo Sandbox hesabı başarıyla bağlandı.', 'Demo Sandbox account linked successfully.'));
       setShowForm(false);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Sandbox connection failed.');
+      setErrorMessage(err?.message || tx('Sandbox bağlantısı başarısız oldu.', 'Sandbox connection failed.'));
     }
   };
 
@@ -82,24 +89,27 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-editorial text-lg text-[#f4f3ef] font-normal">
-                {config.connected ? `@${config.username}` : 'Instagram Professional Credentials'}
+                {config.connected ? `@${config.username}` : tx('Instagram Profesyonel Kimlik Bilgileri', 'Instagram Professional Credentials')}
               </h3>
               {config.connected ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide bg-[#122216] border border-[#1e4620] text-[#7cd38b]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#7cd38b] animate-pulse" />
-                  CONNECTED ({config.accountType})
+                  {tx('BAĞLI', 'CONNECTED')} ({config.accountType})
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide bg-[#26180c] border border-[#523318] text-[#e09f58]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#e09f58]" />
-                  ACTION REQUIRED
+                  {tx('İŞLEM GEREKLİ', 'ACTION REQUIRED')}
                 </span>
               )}
             </div>
             <p className="text-xs text-[#8e8d8a] font-sans mt-0.5">
               {config.connected 
-                ? `Account ID: ${config.accountId || 'ig_biz_verified'} · Meta Graph API v21.0 Active` 
-                : 'Manage Instagram credentials directly in the interface without touching code or environment files.'}
+                ? `${tx('Hesap Kimliği', 'Account ID')}: ${config.accountId || 'ig_biz_verified'} · Meta Graph API v21.0 ${tx('Aktif', 'Active')}` 
+                : tx(
+                    'Kod veya ortam dosyalarına dokunmadan doğrudan arayüz içinden Instagram kimlik bilgilerini yönetin.',
+                    'Manage Instagram credentials directly in the interface without touching code or environment files.'
+                  )}
             </p>
           </div>
         </div>
@@ -112,17 +122,17 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
                 onClick={() => setShowForm(!showForm)}
                 className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#222222] border border-[#333333] hover:border-[#c5a880] text-xs font-mono text-[#f4f3ef] rounded transition cursor-pointer"
               >
-                {showForm ? 'Hide Form' : 'Switch / Edit Credentials'}
+                {showForm ? tx('Formu Gizle', 'Hide Form') : tx('Hesabı Değiştir / Düzenle', 'Switch / Edit Credentials')}
               </button>
               <button
                 type="button"
                 onClick={onDisconnect}
                 disabled={isProcessing}
                 className="px-3 py-1.5 bg-[#241414] hover:bg-[#2f1919] border border-[#4d1f1f] text-[#ef4444] text-xs font-mono uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
-                title="Disconnect this Instagram account"
+                title={tx('Bu Instagram hesabının bağlantısını kes', 'Disconnect this Instagram account')}
               >
                 <Power className="w-3.5 h-3.5" />
-                <span>Disconnect</span>
+                <span>{tx('Bağlantıyı Kes', 'Disconnect')}</span>
               </button>
             </>
           ) : (
@@ -133,7 +143,7 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
               className="px-4 py-2 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5 shadow"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-[#0a0a0a]" />
-              <span>Connect Demo Sandbox</span>
+              <span>{tx('Demo Sandbox Bağla', 'Connect Demo Sandbox')}</span>
             </button>
           )}
         </div>
@@ -143,13 +153,13 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
       {config.connected && !showForm && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
           <div className="p-3 bg-[#161616] border border-[#222222] rounded space-y-1">
-            <span className="text-[10px] uppercase text-[#71717a] block">Target Account</span>
+            <span className="text-[10px] uppercase text-[#71717a] block">{tx('Hedef Hesap', 'Target Account')}</span>
             <div className="text-[#f4f3ef] font-semibold">@{config.username}</div>
             <div className="text-[11px] text-[#8e8d8a]">ID: {config.accountId}</div>
           </div>
 
           <div className="p-3 bg-[#161616] border border-[#222222] rounded space-y-1">
-            <span className="text-[10px] uppercase text-[#71717a] block">Active Permissions</span>
+            <span className="text-[10px] uppercase text-[#71717a] block">{tx('Aktif İzinler', 'Active Permissions')}</span>
             <div className="flex flex-wrap gap-1 text-[10px] text-[#7cd38b]">
               <span>✓ instagram_basic</span>
               <span>·</span>
@@ -159,9 +169,9 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
           </div>
 
           <div className="p-3 bg-[#161616] border border-[#222222] rounded space-y-1">
-            <span className="text-[10px] uppercase text-[#71717a] block">Token Status</span>
-            <div className="text-[#7cd38b] font-semibold">Long-Lived Verified</div>
-            <div className="text-[10px] text-[#8e8d8a]">Expires: 60-Day Auto-Renew</div>
+            <span className="text-[10px] uppercase text-[#71717a] block">{tx('Token Durumu', 'Token Status')}</span>
+            <div className="text-[#7cd38b] font-semibold">{tx('Uzun Ömürlü Doğrulandı', 'Long-Lived Verified')}</div>
+            <div className="text-[10px] text-[#8e8d8a]">{tx('Bitiş: 60 Gün Oto-Yenileme', 'Expires: 60-Day Auto-Renew')}</div>
           </div>
         </div>
       )}
@@ -173,16 +183,19 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
             <div className="flex items-center gap-2">
               <Key className="w-4 h-4 text-[#c5a880]" />
               <h4 className="text-xs font-mono uppercase tracking-wider text-[#f4f3ef]">
-                {config.connected ? 'Switch Instagram Account or Update Token' : 'Enter Meta Graph API Credentials'}
+                {config.connected ? tx('Instagram Hesabını Değiştir veya Token Güncelle', 'Switch Instagram Account or Update Token') : tx('Meta Graph API Kimlik Bilgilerini Girin', 'Enter Meta Graph API Credentials')}
               </h4>
             </div>
             <span className="text-[11px] font-mono text-[#8e8d8a]">
-              Saved securely to local database
+              {tx('Yerel veritabanına güvenle kaydedilir', 'Saved securely to local database')}
             </span>
           </div>
 
           <p className="text-xs text-[#8e8d8a] leading-relaxed">
-            Provide your Meta Developer App System User Token (Page Access Token) with <span className="font-mono text-[#c5a880]">instagram_content_publish</span> scope and the numeric Instagram Business Account ID. No password or personal credentials required.
+            {tx(
+              'instagram_content_publish kapsamına sahip Meta Developer App System User Token (Sayfa Erişim Tokeni) ve sayısal Instagram Business Hesap Kimliğini girin. Şifre veya kişisel bilgi gerekmez.',
+              'Provide your Meta Developer App System User Token (Page Access Token) with instagram_content_publish scope and the numeric Instagram Business Account ID. No password or personal credentials required.'
+            )}
           </p>
 
           {errorMessage && (
@@ -203,25 +216,25 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[11px] font-mono text-[#71717a] uppercase mb-1">
-                  Instagram Business Account ID
+                  {tx('Instagram Business Hesap Kimliği', 'Instagram Business Account ID')}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 17841400000000000"
+                  placeholder={tx('ör. 17841400000000000', 'e.g. 17841400000000000')}
                   value={accountIdInput}
                   onChange={(e) => setAccountIdInput(e.target.value)}
                   className="w-full bg-[#181818] border border-[#262626] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
                   required
                 />
                 <span className="text-[10px] font-mono text-[#71717a] mt-1 block">
-                  Find in Meta Business Suite &gt; Accounts &gt; Instagram accounts.
+                  {tx('Meta Business Suite > Hesaplar > Instagram hesapları yolundan bulunur.', 'Find in Meta Business Suite > Accounts > Instagram accounts.')}
                 </span>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-mono text-[#71717a] uppercase">
-                    Meta System User Access Token
+                    {tx('Meta Sistem Kullanıcısı Erişim Tokeni', 'Meta System User Access Token')}
                   </label>
                   <button
                     type="button"
@@ -229,19 +242,19 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
                     className="text-[11px] font-mono text-[#8e8d8a] hover:text-[#f4f3ef] flex items-center gap-1 cursor-pointer"
                   >
                     {showToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    <span>{showToken ? 'Hide' : 'Reveal'}</span>
+                    <span>{showToken ? tx('Gizle', 'Hide') : tx('Göster', 'Reveal')}</span>
                   </button>
                 </div>
                 <input
                   type={showToken ? 'text' : 'password'}
-                  placeholder="e.g. EAABw..."
+                  placeholder={tx('ör. EAABw...', 'e.g. EAABw...')}
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                   className="w-full bg-[#181818] border border-[#262626] rounded px-3 py-2 text-xs text-[#f4f3ef] font-mono focus:outline-none focus:border-[#c5a880]"
                   required
                 />
                 <span className="text-[10px] font-mono text-[#71717a] mt-1 block">
-                  Never-expiring token with instagram_content_publish scope.
+                  {tx('instagram_content_publish kapsamlı süresiz token.', 'Never-expiring token with instagram_content_publish scope.')}
                 </span>
               </div>
             </div>
@@ -254,7 +267,7 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
                   className="px-4 py-2 bg-[#f4f3ef] hover:bg-white text-[#0a0a0a] text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5 shadow"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#0a0a0a]" />
-                  <span>Verify & Connect Live Account</span>
+                  <span>{tx('Doğrula ve Canlı Hesabı Bağla', 'Verify & Connect Live Account')}</span>
                 </button>
 
                 <button
@@ -263,7 +276,7 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
                   disabled={isProcessing}
                   className="px-3.5 py-2 bg-[#1c1c1c] hover:bg-[#262626] border border-[#333333] hover:border-[#c5a880] text-xs font-mono text-[#c5a880] rounded transition cursor-pointer"
                 >
-                  Use Demo / Sandbox
+                  {tx('Demo / Sandbox Kullan', 'Use Demo / Sandbox')}
                 </button>
               </div>
 
@@ -273,7 +286,7 @@ export const InstagramCredentialsCard: React.FC<InstagramCredentialsCardProps> =
                   onClick={() => setShowForm(false)}
                   className="text-xs font-mono text-[#8e8d8a] hover:text-[#f4f3ef] cursor-pointer"
                 >
-                  Cancel
+                  {tx('İptal', 'Cancel')}
                 </button>
               )}
             </div>

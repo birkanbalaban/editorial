@@ -11,10 +11,10 @@ import {
   Key, 
   Clock, 
   RefreshCw,
-  Sparkles,
   Info
 } from 'lucide-react';
 import { InstagramAccountConfig } from '../types/editorial';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface AgentIntegrationModalProps {
   isOpen: boolean;
@@ -25,6 +25,8 @@ interface AgentIntegrationModalProps {
 
 export type ReadinessBadgeStatus = 'READY' | 'ACTION_REQUIRED';
 
+type TxFn = (tr: string, en: string) => string;
+
 interface ChecklistItem {
   id: string;
   category: 'codebase' | 'production';
@@ -33,101 +35,146 @@ interface ChecklistItem {
   defaultChecked: boolean;
 }
 
-const CHECKLIST_ITEMS: ChecklistItem[] = [
-  {
-    id: 'score-engine',
-    category: 'codebase',
-    label: '5-Factor Weighted Curatorial Scoring Algorithm',
-    description: 'Deterministic evaluation across Composition (25%), Lighting (20%), Styling (20%), Cultural Relevance (15%), and Narrative (20%).',
-    defaultChecked: true,
-  },
-  {
-    id: 'gemini-research',
-    category: 'codebase',
-    label: 'Autonomous Gemini Research Engine',
-    description: 'Server-side gemini-3.8-flash integration extracting photographer credits, styling, and crops with structured JSON schema.',
-    defaultChecked: true,
-  },
-  {
-    id: 'rights-firewall',
-    category: 'codebase',
-    label: 'Legal Rights Firewall & Reference Card Gating',
-    description: 'Blocks unlicensed publishing; prepares non-watermarked Editorial Reference Cards for works lacking reproduction clearance.',
-    defaultChecked: true,
-  },
-  {
-    id: 'sha256-hash',
-    category: 'codebase',
-    label: 'SHA-256 Material Change Detection Guard',
-    description: 'Any modification to captions, image URLs, or rights records revokes prior approval and requires curator re-approval.',
-    defaultChecked: true,
-  },
-  {
-    id: 'automation-scheduler',
-    category: 'codebase',
-    label: 'Persistent Europe/Istanbul Automation Scheduler',
-    description: 'Autonomous 6-stage daily cron slots running at 08:00, 09:00, 10:00, 11:00, 14:00, and 20:00.',
-    defaultChecked: true,
-  },
-  {
-    id: 'meta-adapter',
-    category: 'codebase',
-    label: 'Meta Graph API v21.0 Publishing Adapter',
-    description: 'Official single and carousel media container lifecycle with fallback sandbox simulation and audit trail logging.',
-    defaultChecked: true,
-  },
-  {
-    id: 'recharts-analytics',
-    category: 'codebase',
-    label: 'Recharts Performance & Trend-Line Analytics',
-    description: 'Continuous timeline, 3D/5D Moving Average trend-lines, and side-by-side comparative matrices for time periods and campaigns.',
-    defaultChecked: true,
-  },
-  {
-    id: 'preference-learning',
-    category: 'codebase',
-    label: 'Editorial Preference Learning System',
-    description: 'Telemetry recording approved, rejected, and saved aesthetic tags to tune future discovery weights.',
-    defaultChecked: true,
-  },
-  {
-    id: 'meta-app-review',
-    category: 'production',
-    label: 'Meta App Review for instagram_content_publish',
-    description: 'Submit your Meta Developer App for review to grant public accounts access to the Instagram Content Publishing API.',
-    defaultChecked: false,
-  },
-  {
-    id: 'system-user-token',
-    category: 'production',
-    label: 'Permanent System User Page Access Token',
-    description: 'Generate a non-expiring System User Access Token in Meta Business Manager and set INSTAGRAM_ACCESS_TOKEN.',
-    defaultChecked: false,
-  },
-  {
-    id: 'public-https-media',
-    category: 'production',
-    label: 'Public HTTPS Media Host Hosting',
-    description: 'Instagram container endpoints require public HTTPS URLs for image assets. Ensure assets are served over public CDN/Cloud Run.',
-    defaultChecked: true,
-  },
-  {
-    id: 'cloud-scheduler',
-    category: 'production',
-    label: 'Google Cloud Scheduler Hermetic Cron Hook',
-    description: 'For serverless Cloud Run deployments that scale to zero, configure Cloud Scheduler to trigger POST /api/workflow/run.',
-    defaultChecked: false,
-  },
-  {
-    id: 'gemini-secret',
-    category: 'production',
-    label: 'Production GEMINI_API_KEY Injected',
-    description: 'Ensure your server environment has GEMINI_API_KEY injected via cloud secrets or platform environment configuration.',
-    defaultChecked: true,
-  },
+const CHECKLIST_BASE: Array<{ id: string; category: 'codebase' | 'production'; defaultChecked: boolean }> = [
+  { id: 'score-engine', category: 'codebase', defaultChecked: true },
+  { id: 'gemini-research', category: 'codebase', defaultChecked: true },
+  { id: 'rights-firewall', category: 'codebase', defaultChecked: true },
+  { id: 'sha256-hash', category: 'codebase', defaultChecked: true },
+  { id: 'automation-scheduler', category: 'codebase', defaultChecked: true },
+  { id: 'meta-adapter', category: 'codebase', defaultChecked: true },
+  { id: 'recharts-analytics', category: 'codebase', defaultChecked: true },
+  { id: 'preference-learning', category: 'codebase', defaultChecked: true },
+  { id: 'meta-app-review', category: 'production', defaultChecked: false },
+  { id: 'system-user-token', category: 'production', defaultChecked: false },
+  { id: 'public-https-media', category: 'production', defaultChecked: true },
+  { id: 'cloud-scheduler', category: 'production', defaultChecked: false },
+  { id: 'gemini-secret', category: 'production', defaultChecked: true },
 ];
 
-const RAW_MARKDOWN_GUIDE = `# THE EDITORIAL INDEX — Agent Integration & Deployment Guide
+function getLocalizedChecklistItems(tx: TxFn): ChecklistItem[] {
+  const copyMap: Record<string, { label: string; description: string }> = {
+    'score-engine': {
+      label: tx('5 Faktörlü Ağırlıklı Kürasyon Puanlama Algoritması', '5-Factor Weighted Curatorial Scoring Algorithm'),
+      description: tx(
+        'Kompozisyon (%25), Işık (%20), Stil (%20), Kültürel Güncellik (%15) ve Anlatı (%20) boyutlarında deterministik değerlendirme.',
+        'Deterministic evaluation across Composition (25%), Lighting (20%), Styling (20%), Cultural Relevance (15%), and Narrative (20%).'
+      ),
+    },
+    'gemini-research': {
+      label: tx('Otonom Gemini Araştırma Motoru', 'Autonomous Gemini Research Engine'),
+      description: tx(
+        'Yapılandırılmış JSON şemasıyla fotoğrafçı künyelerini, stili ve kadrajları çıkaran sunucu tarafı gemini-3.8-flash entegrasyonu.',
+        'Server-side gemini-3.8-flash integration extracting photographer credits, styling, and crops with structured JSON schema.'
+      ),
+    },
+    'rights-firewall': {
+      label: tx('Yasal Haklar Güvenlik Duvarı & Referans Kart Kapısı', 'Legal Rights Firewall & Reference Card Gating'),
+      description: tx(
+        'Lisanssız yayınları engeller; çoğaltma izni olmayan eserler için filigransız Editoryal Referans Kartları hazırlar.',
+        'Blocks unlicensed publishing; prepares non-watermarked Editorial Reference Cards for works lacking reproduction clearance.'
+      ),
+    },
+    'sha256-hash': {
+      label: tx('SHA-256 İçerik Değişikliği Koruma Kilidi', 'SHA-256 Material Change Detection Guard'),
+      description: tx(
+        'Açıklama, görsel URL’si veya hak kayıtlarında yapılan her değişiklik önceki onayı iptal eder ve yeniden küratör onayı gerektirir.',
+        'Any modification to captions, image URLs, or rights records revokes prior approval and requires curator re-approval.'
+      ),
+    },
+    'automation-scheduler': {
+      label: tx('Kalıcı Europe/Istanbul Otomasyon Zamanlayıcısı', 'Persistent Europe/Istanbul Automation Scheduler'),
+      description: tx(
+        '08:00, 09:00, 10:00, 11:00, 14:00 ve 20:00 saatlerinde çalışan 6 aşamalı günlük otonom zamanlama slotları.',
+        'Autonomous 6-stage daily cron slots running at 08:00, 09:00, 10:00, 11:00, 14:00, and 20:00.'
+      ),
+    },
+    'meta-adapter': {
+      label: tx('Meta Graph API v21.0 Yayın Adaptörü', 'Meta Graph API v21.0 Publishing Adapter'),
+      description: tx(
+        'Yedek sandbox simülasyonu ve denetim kaydı (audit trail) günlüğü ile resmi tekli ve karusel medya kapsayıcı yaşam döngüsü.',
+        'Official single and carousel media container lifecycle with fallback sandbox simulation and audit trail logging.'
+      ),
+    },
+    'recharts-analytics': {
+      label: tx('Recharts Performans & Trend Çizgisi Analitiği', 'Recharts Performance & Trend-Line Analytics'),
+      description: tx(
+        'Sürekli zaman çizelgesi, 3G/5G Hareketli Ortalama trend çizgileri ve dönem/kampanya karşılaştırma matrisleri.',
+        'Continuous timeline, 3D/5D Moving Average trend-lines, and side-by-side comparative matrices for time periods and campaigns.'
+      ),
+    },
+    'preference-learning': {
+      label: tx('Editoryal Tercih Öğrenme Sistemi', 'Editorial Preference Learning System'),
+      description: tx(
+        'Gelecekteki keşif ağırlıklarını ayarlamak için onaylanan, reddedilen ve kaydedilen estetik etiketleri izleyen telemetri.',
+        'Telemetry recording approved, rejected, and saved aesthetic tags to tune future discovery weights.'
+      ),
+    },
+    'meta-app-review': {
+      label: tx('instagram_content_publish için Meta Uygulama İncelemesi', 'Meta App Review for instagram_content_publish'),
+      description: tx(
+        'Herkese açık hesapların Instagram İçerik Yayınlama API’sine erişebilmesi için Meta Developer Uygulamanızı incelemeye gönderin.',
+        'Submit your Meta Developer App for review to grant public accounts access to the Instagram Content Publishing API.'
+      ),
+    },
+    'system-user-token': {
+      label: tx('Kalıcı Sistem Kullanıcısı Sayfa Erişim Belirteci', 'Permanent System User Page Access Token'),
+      description: tx(
+        'Meta Business Manager’da süresi dolmayan bir Sistem Kullanıcısı Erişim Belirteci oluşturun ve INSTAGRAM_ACCESS_TOKEN olarak tanımlayın.',
+        'Generate a non-expiring System User Access Token in Meta Business Manager and set INSTAGRAM_ACCESS_TOKEN.'
+      ),
+    },
+    'public-https-media': {
+      label: tx('Herkese Açık HTTPS Medya Sunumu', 'Public HTTPS Media Host Hosting'),
+      description: tx(
+        'Instagram kapsayıcı uç noktaları görseller için herkese açık HTTPS URL’leri gerektirir. Varlıkların açık CDN/Cloud Run üzerinden sunulduğundan emin olun.',
+        'Instagram container endpoints require public HTTPS URLs for image assets. Ensure assets are served over public CDN/Cloud Run.'
+      ),
+    },
+    'cloud-scheduler': {
+      label: tx('Google Cloud Scheduler Hermetik Cron Tetikleyicisi', 'Google Cloud Scheduler Hermetic Cron Hook'),
+      description: tx(
+        'Sıfıra ölçeklenen sunucusuz Cloud Run dağıtımları için POST /api/workflow/run adresini tetikleyecek Cloud Scheduler yapılandırın.',
+        'For serverless Cloud Run deployments that scale to zero, configure Cloud Scheduler to trigger POST /api/workflow/run.'
+      ),
+    },
+    'gemini-secret': {
+      label: tx('Üretim GEMINI_API_KEY Tanımı', 'Production GEMINI_API_KEY Injected'),
+      description: tx(
+        'Sunucu ortamınızda GEMINI_API_KEY değişkeninin bulut gizli anahtarları veya platform ortam ayarları üzerinden tanımlandığından emin olun.',
+        'Ensure your server environment has GEMINI_API_KEY injected via cloud secrets or platform environment configuration.'
+      ),
+    },
+  };
+
+  return CHECKLIST_BASE.map(base => ({
+    ...base,
+    label: copyMap[base.id]?.label || base.id,
+    description: copyMap[base.id]?.description || '',
+  }));
+}
+
+function getRawMarkdownGuide(lang: 'tr' | 'en'): string {
+  if (lang === 'tr') {
+    return `# THE EDITORIAL INDEX — Ajan Entegrasyon ve Dağıtım Kılavuzu
+Otonom Yüksek Moda Kürasyonu, Hak Yönetimi ve Meta Graph API Yayın Platformu
+
+1. GENEL BAKIŞ VE MOTOR MİMARİSİ
+Sistem; keşif ve puanlama için sunucu tarafı Gemini 3.8 Flash hattı, yayınlama için doğrulanmış Meta Graph API v21.0 adaptörü ve katı yasal hak denetimi kullanarak otonom çalışır.
+
+2. PUANLAMA MOTORU
+Genel = 0.25*Kompozisyon + 0.20*Işık + 0.20*Stil + 0.15*Kültür + 0.20*Anlatı. Günlük ilk 5 eser seçilir; hakları doğrulanmış en fazla 2 gönderi Instagram için hazırlanır.
+
+3. HAK YÖNETİMİ
+Yalnızca 'verified' (doğrulanmış) haklara sahip eserler yayınlanabilir paket üretir. Lisanssız veya bekleyen haklar filigransız temiz 'Editoryal Referans Kartları' oluşturur.
+
+4. META GRAPH API v21.0 BAĞLANTISI
+INSTAGRAM_ACCOUNT_ID ve INSTAGRAM_ACCESS_TOKEN değişkenlerini tanımlayın. Sistem karusel desteğiyle kapsayıcı oluşturma (POST /{ig-user-id}/media) ve yayınlama (POST /{ig-user-id}/media_publish) adımlarını yönetir.
+
+5. AUTOPILOT GÜVENLİĞİ
+Açık kullanıcı onayı, bağlı profesyonel Instagram hesabı, günlük en fazla 2 gönderi limiti, SHA-256 değişiklik algılama ve Acil Durdurma anahtarı gerektirir.`;
+  }
+
+  return `# THE EDITORIAL INDEX — Agent Integration & Deployment Guide
 Autonomous High-Fashion Curation, Rights Management & Meta Graph API Publishing Platform
 
 1. OVERVIEW & ENGINE ARCHITECTURE
@@ -144,152 +191,230 @@ Set INSTAGRAM_ACCOUNT_ID and INSTAGRAM_ACCESS_TOKEN. The system handles containe
 
 5. AUTOPILOT SAFETY
 Requires explicit activation, connected professional Instagram account, max 2 posts/day cap, SHA-256 change detection, and emergency stop kill switch.`;
+}
 
 export function getItemDynamicStatus(
   itemId: string,
   category: 'codebase' | 'production',
   isIgLive: boolean,
   isGeminiLive: boolean,
-  igConfig?: InstagramAccountConfig
+  igConfig?: InstagramAccountConfig,
+  tx: TxFn = (_tr, en) => en
 ): {
   badgeStatus: ReadinessBadgeStatus;
   badgeLabel: string;
   statusText: string;
   hint?: string;
 } {
+  const readyLabel = tx('HAZIR', 'READY');
+  const actionLabel = tx('İŞLEM GEREKLİ', 'ACTION REQUIRED');
+
   switch (itemId) {
     case 'score-engine':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Verified in src/lib/scoring.ts · 17 Automated Tests Passing',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/lib/scoring.ts içinde doğrulandı · 17 Otomatik Test Başarılı',
+          'Verified in src/lib/scoring.ts · 17 Automated Tests Passing'
+        ),
       };
 
     case 'gemini-research':
       return {
         badgeStatus: isGeminiLive ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: isGeminiLive ? 'READY' : 'ACTION REQUIRED',
+        badgeLabel: isGeminiLive ? readyLabel : actionLabel,
         statusText: isGeminiLive
-          ? 'gemini-3.8-flash active · Live Research & 5-Factor Scoring responding'
-          : 'Action Required · Set GEMINI_API_KEY (Curatorial Fallback Active)',
+          ? tx(
+              'gemini-3.8-flash aktif · Canlı Araştırma ve 5 Faktörlü Puanlama yanıt veriyor',
+              'gemini-3.8-flash active · Live Research & 5-Factor Scoring responding'
+            )
+          : tx(
+              'İşlem Gerekli · GEMINI_API_KEY Tanımlayın (Kürasyon Yedek Motoru Aktif)',
+              'Action Required · Set GEMINI_API_KEY (Curatorial Fallback Active)'
+            ),
         hint: isGeminiLive
           ? undefined
-          : 'Add GEMINI_API_KEY in the AI Studio Secrets panel to enable real-time LLM curation.',
+          : tx(
+              'Gerçek zamanlı LLM kürasyonunu etkinleştirmek için Secrets paneline GEMINI_API_KEY ekleyin.',
+              'Add GEMINI_API_KEY in the AI Studio Secrets panel to enable real-time LLM curation.'
+            ),
       };
 
     case 'rights-firewall':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Enforced in src/lib/publishingRules.ts · Reference Card Gating Active',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/lib/publishingRules.ts içinde uygulanıyor · Referans Kart Kapısı Aktif',
+          'Enforced in src/lib/publishingRules.ts · Reference Card Gating Active'
+        ),
       };
 
     case 'sha256-hash':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Active in src/lib/publishingRules.ts · Material Tamper Guard Active',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/lib/publishingRules.ts içinde aktif · İçerik Değişiklik Koruması Aktif',
+          'Active in src/lib/publishingRules.ts · Material Tamper Guard Active'
+        ),
       };
 
     case 'automation-scheduler':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Active in src/server/automationEngine.ts · Europe/Istanbul (UTC+3)',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/server/automationEngine.ts içinde aktif · Europe/Istanbul (UTC+3)',
+          'Active in src/server/automationEngine.ts · Europe/Istanbul (UTC+3)'
+        ),
       };
 
     case 'meta-adapter':
       return {
         badgeStatus: isIgLive ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: isIgLive ? 'READY' : 'ACTION REQUIRED',
+        badgeLabel: isIgLive ? readyLabel : actionLabel,
         statusText: isIgLive
-          ? `Meta Graph API v21.0 active (@${igConfig?.username || 'theeditorialindex'})`
-          : 'Action Required · Connect Instagram Professional Account',
+          ? tx(
+              `Meta Graph API v21.0 aktif (@${igConfig?.username || 'theeditorialindex'})`,
+              `Meta Graph API v21.0 active (@${igConfig?.username || 'theeditorialindex'})`
+            )
+          : tx(
+              'İşlem Gerekli · Profesyonel Instagram Hesabı Bağlayın',
+              'Action Required · Connect Instagram Professional Account'
+            ),
         hint: isIgLive
           ? undefined
-          : 'Connect an Instagram Professional account via Settings > Instagram or enable Sandbox simulation.',
+          : tx(
+              'Ayarlar > Instagram üzerinden bir Profesyonel Instagram hesabı bağlayın veya Sandbox simülasyonunu kullanın.',
+              'Connect an Instagram Professional account via Settings > Instagram or enable Sandbox simulation.'
+            ),
       };
 
     case 'recharts-analytics':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Active in src/components/EditorialEngagementChart.tsx · Moving Averages & Matrix',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/components/EditorialEngagementChart.tsx içinde aktif · Hareketli Ortalamalar ve Matris',
+          'Active in src/components/EditorialEngagementChart.tsx · Moving Averages & Matrix'
+        ),
       };
 
     case 'preference-learning':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Active in src/components/EditorialLearningView.tsx · Aesthetic Tag Telemetry',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'src/components/EditorialLearningView.tsx içinde aktif · Estetik Etiket Telemetrisi',
+          'Active in src/components/EditorialLearningView.tsx · Aesthetic Tag Telemetry'
+        ),
       };
 
     case 'meta-app-review':
       return {
         badgeStatus: isIgLive ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: isIgLive ? 'READY' : 'ACTION REQUIRED',
+        badgeLabel: isIgLive ? readyLabel : actionLabel,
         statusText: isIgLive
-          ? `Permissions Verified (${igConfig?.permissions?.length ? igConfig.permissions.join(', ') : 'instagram_content_publish'})`
-          : 'Action Required · Meta Developer App Review (instagram_content_publish)',
+          ? tx(
+              `İzinler Doğrulandı (${igConfig?.permissions?.length ? igConfig.permissions.join(', ') : 'instagram_content_publish'})`,
+              `Permissions Verified (${igConfig?.permissions?.length ? igConfig.permissions.join(', ') : 'instagram_content_publish'})`
+            )
+          : tx(
+              'İşlem Gerekli · Meta Geliştirici Uygulama İncelemesi (instagram_content_publish)',
+              'Action Required · Meta Developer App Review (instagram_content_publish)'
+            ),
         hint: isIgLive
           ? undefined
-          : 'Submit your Meta Developer App for instagram_content_publish to publish to production accounts.',
+          : tx(
+              'Üretim hesaplarında yayın yapmak için Meta Geliştirici Uygulamanızı instagram_content_publish iznine gönderin.',
+              'Submit your Meta Developer App for instagram_content_publish to publish to production accounts.'
+            ),
       };
 
     case 'system-user-token':
       return {
         badgeStatus: isIgLive ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: isIgLive ? 'READY' : 'ACTION REQUIRED',
+        badgeLabel: isIgLive ? readyLabel : actionLabel,
         statusText: isIgLive
-          ? `Token Active (Account ID: ${igConfig?.accountId || 'verified'})`
-          : 'Action Required · Provide Permanent INSTAGRAM_ACCESS_TOKEN',
+          ? tx(
+              `Belirteç Aktif (Hesap ID: ${igConfig?.accountId || 'doğrulandı'})`,
+              `Token Active (Account ID: ${igConfig?.accountId || 'verified'})`
+            )
+          : tx(
+              'İşlem Gerekli · Kalıcı INSTAGRAM_ACCESS_TOKEN Sağlayın',
+              'Action Required · Provide Permanent INSTAGRAM_ACCESS_TOKEN'
+            ),
         hint: isIgLive
           ? undefined
-          : 'Generate a non-expiring System User Access Token in Meta Business Manager.',
+          : tx(
+              'Meta Business Manager üzerinden süresi dolmayan bir Sistem Kullanıcısı Erişim Belirteci oluşturun.',
+              'Generate a non-expiring System User Access Token in Meta Business Manager.'
+            ),
       };
 
     case 'public-https-media':
       return {
         badgeStatus: 'READY',
-        badgeLabel: 'READY',
-        statusText: 'Public HTTPS Media Host Active for Instagram Ingestion',
+        badgeLabel: readyLabel,
+        statusText: tx(
+          'Instagram Alımı için Herkese Açık HTTPS Medya Sunumu Aktif',
+          'Public HTTPS Media Host Active for Instagram Ingestion'
+        ),
       };
 
     case 'cloud-scheduler':
       return {
         badgeStatus: 'ACTION_REQUIRED',
-        badgeLabel: 'ACTION REQUIRED',
-        statusText: 'Action Required · Optional Cloud Scheduler Hook for Scale-to-Zero',
-        hint: 'For production serverless Cloud Run deployments, trigger POST /api/workflow/run on cron schedule.',
+        badgeLabel: actionLabel,
+        statusText: tx(
+          'İşlem Gerekli · Sıfıra Ölçekleme İçin İsteğe Bağlı Cloud Scheduler Kancası',
+          'Action Required · Optional Cloud Scheduler Hook for Scale-to-Zero'
+        ),
+        hint: tx(
+          'Sunucusuz Cloud Run dağıtımlarında POST /api/workflow/run ucunu cron takvimiyle tetikleyin.',
+          'For production serverless Cloud Run deployments, trigger POST /api/workflow/run on cron schedule.'
+        ),
       };
 
     case 'gemini-secret':
       return {
         badgeStatus: isGeminiLive ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: isGeminiLive ? 'READY' : 'ACTION REQUIRED',
+        badgeLabel: isGeminiLive ? readyLabel : actionLabel,
         statusText: isGeminiLive
-          ? 'Production GEMINI_API_KEY Injected & Verified'
-          : 'Action Required · GEMINI_API_KEY Not Configured',
+          ? tx(
+              'Üretim GEMINI_API_KEY Eklendi ve Doğrulandı',
+              'Production GEMINI_API_KEY Injected & Verified'
+            )
+          : tx(
+              'İşlem Gerekli · GEMINI_API_KEY Yapılandırılmadı',
+              'Action Required · GEMINI_API_KEY Not Configured'
+            ),
         hint: isGeminiLive
           ? undefined
-          : 'Set GEMINI_API_KEY in the environment or Secrets panel to complete live API access.',
+          : tx(
+              'Canlı API erişimini tamamlamak için ortam değişkenlerine veya Secrets paneline GEMINI_API_KEY ekleyin.',
+              'Set GEMINI_API_KEY in the environment or Secrets panel to complete live API access.'
+            ),
       };
 
     default:
       return {
         badgeStatus: category === 'codebase' ? 'READY' : 'ACTION_REQUIRED',
-        badgeLabel: category === 'codebase' ? 'READY' : 'ACTION REQUIRED',
-        statusText: category === 'codebase' ? 'Codebase Verified' : 'Action Required',
+        badgeLabel: category === 'codebase' ? readyLabel : actionLabel,
+        statusText: category === 'codebase' ? tx('Kod Tabanı Doğrulandı', 'Codebase Verified') : actionLabel,
       };
   }
 }
 
 const VisualStatusBadge: React.FC<{ status: ReadinessBadgeStatus }> = ({ status }) => {
+  const { tx } = useLanguage();
   if (status === 'READY') {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide bg-[#122216] border border-[#1e4620] text-[#7cd38b] shadow-xs shrink-0">
         <span className="w-1.5 h-1.5 rounded-full bg-[#7cd38b] animate-pulse" />
-        READY
+        {tx('HAZIR', 'READY')}
       </span>
     );
   }
@@ -297,7 +422,7 @@ const VisualStatusBadge: React.FC<{ status: ReadinessBadgeStatus }> = ({ status 
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide bg-[#26180c] border border-[#523318] text-[#e09f58] shadow-xs shrink-0">
       <span className="w-1.5 h-1.5 rounded-full bg-[#e09f58]" />
-      ACTION REQUIRED
+      {tx('İŞLEM GEREKLİ', 'ACTION REQUIRED')}
     </span>
   );
 };
@@ -308,6 +433,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
   instagram,
   geminiConnected,
 }) => {
+  const { lang, tx } = useLanguage();
   const [activeTab, setActiveTab] = useState<'gemini' | 'meta' | 'autopilot' | 'checklist'>('gemini');
   const [copied, setCopied] = useState(false);
   const [filterMode, setFilterMode] = useState<'all' | 'ready' | 'action_required'>('all');
@@ -319,6 +445,9 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
 
   const isIgLive = Boolean(liveInstagram?.connected && liveInstagram?.accountType !== 'NOT_CONNECTED');
   const isGeminiLive = Boolean(liveGeminiConnected);
+
+  const checklistItems = useMemo(() => getLocalizedChecklistItems(tx), [tx]);
+  const rawMarkdownGuide = useMemo(() => getRawMarkdownGuide(lang), [lang]);
 
   const fetchLiveStatus = async () => {
     setIsRefreshing(true);
@@ -373,7 +502,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
       // fallback
     }
     const initial: Record<string, boolean> = {};
-    CHECKLIST_ITEMS.forEach(item => {
+    CHECKLIST_BASE.forEach(item => {
       initial[item.id] = item.defaultChecked;
     });
     return initial;
@@ -394,8 +523,8 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
   };
 
   // Item status mappings
-  const itemsWithStatus = CHECKLIST_ITEMS.map(item => {
-    const dyn = getItemDynamicStatus(item.id, item.category, isIgLive, isGeminiLive, liveInstagram);
+  const itemsWithStatus = checklistItems.map(item => {
+    const dyn = getItemDynamicStatus(item.id, item.category, isIgLive, isGeminiLive, liveInstagram, tx);
     return {
       ...item,
       dynStatus: dyn.badgeStatus,
@@ -408,7 +537,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
   const readyItemsCount = itemsWithStatus.filter(i => i.dynStatus === 'READY').length;
   const actionRequiredCount = itemsWithStatus.filter(i => i.dynStatus === 'ACTION_REQUIRED').length;
   const completedCount = Object.values(checkedMap).filter(Boolean).length;
-  const totalCount = CHECKLIST_ITEMS.length;
+  const totalCount = checklistItems.length;
   const progressPct = Math.round((completedCount / totalCount) * 100);
 
   const filteredItems = itemsWithStatus.filter(item => {
@@ -419,7 +548,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
 
   const handleCopyMarkdown = async () => {
     try {
-      await navigator.clipboard.writeText(RAW_MARKDOWN_GUIDE);
+      await navigator.clipboard.writeText(rawMarkdownGuide);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -428,7 +557,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
   };
 
   const handleDownloadMarkdown = () => {
-    const blob = new Blob([RAW_MARKDOWN_GUIDE], { type: 'text/markdown;charset=utf-8' });
+    const blob = new Blob([rawMarkdownGuide], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -453,12 +582,12 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[#c5a880]">
               <span>The Editorial Index</span>
               <span>·</span>
-              <span>Technical Specification</span>
+              <span>{tx('Teknik Şartname', 'Technical Specification')}</span>
               <span>·</span>
               <span>Vol. 01</span>
             </div>
             <h2 id="modal-title" className="font-editorial text-2xl text-[#f4f3ef] font-normal tracking-tight mt-0.5">
-              Agent Integration & Deployment Guide
+              {tx('Ajan Entegrasyon ve Dağıtım Kılavuzu', 'Agent Integration & Deployment Guide')}
             </h2>
           </div>
 
@@ -466,25 +595,25 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             <button
               onClick={handleCopyMarkdown}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1c1c1c] hover:bg-[#262626] border border-[#2c2c2c] rounded text-[#f4f3ef] transition cursor-pointer"
-              title="Copy full technical specification in Markdown format"
+              title={tx('Tam teknik şartnameyi Markdown formatında kopyala', 'Copy full technical specification in Markdown format')}
             >
               {copied ? <Check className="w-3.5 h-3.5 text-[#7cd38b]" /> : <Copy className="w-3.5 h-3.5 text-[#c5a880]" />}
-              <span>{copied ? 'Copied' : 'Copy .md'}</span>
+              <span>{copied ? tx('Kopyalandı', 'Copied') : tx('.md Kopyala', 'Copy .md')}</span>
             </button>
 
             <button
               onClick={handleDownloadMarkdown}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1c1c1c] hover:bg-[#262626] border border-[#2c2c2c] rounded text-[#f4f3ef] transition cursor-pointer"
-              title="Download standalone Markdown guide"
+              title={tx('Bağımsız Markdown kılavuzunu indir', 'Download standalone Markdown guide')}
             >
               <Download className="w-3.5 h-3.5 text-[#8e8d8a]" />
-              <span>Download</span>
+              <span>{tx('İndir', 'Download')}</span>
             </button>
 
             <button
               onClick={onClose}
               className="p-1.5 rounded hover:bg-[#222222] text-[#8e8d8a] hover:text-[#f4f3ef] transition cursor-pointer ml-1"
-              aria-label="Close modal"
+              aria-label={tx('Pencereyi kapat', 'Close modal')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -502,8 +631,8 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
-            <span>01. Gemini Backend & Scoring</span>
-            <span className={`w-2 h-2 rounded-full ${isGeminiLive ? 'bg-[#7cd38b]' : 'bg-[#e09f58]'}`} title={isGeminiLive ? 'Gemini API Connected' : 'Gemini API Action Required'} />
+            <span>{tx('01. Gemini Altyapısı ve Puanlama', '01. Gemini Backend & Scoring')}</span>
+            <span className={`w-2 h-2 rounded-full ${isGeminiLive ? 'bg-[#7cd38b]' : 'bg-[#e09f58]'}`} title={isGeminiLive ? tx('Gemini API Bağlı', 'Gemini API Connected') : tx('Gemini API İşlem Gerekli', 'Gemini API Action Required')} />
           </button>
 
           <button
@@ -515,8 +644,8 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             }`}
           >
             <Key className="w-3.5 h-3.5" />
-            <span>02. Meta Graph API & Credentials</span>
-            <span className={`w-2 h-2 rounded-full ${isIgLive ? 'bg-[#7cd38b]' : 'bg-[#e09f58]'}`} title={isIgLive ? 'Instagram Connected' : 'Instagram Action Required'} />
+            <span>{tx('02. Meta Graph API ve Kimlik Bilgileri', '02. Meta Graph API & Credentials')}</span>
+            <span className={`w-2 h-2 rounded-full ${isIgLive ? 'bg-[#7cd38b]' : 'bg-[#e09f58]'}`} title={isIgLive ? tx('Instagram Bağlı', 'Instagram Connected') : tx('Instagram İşlem Gerekli', 'Instagram Action Required')} />
           </button>
 
           <button
@@ -528,7 +657,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>03. Autopilot Flow & Safety Gates</span>
+            <span>{tx('03. Autopilot Akışı ve Güvenlik Kapıları', '03. Autopilot Flow & Safety Gates')}</span>
           </button>
 
           <button
@@ -540,8 +669,8 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             }`}
           >
             <ListChecks className="w-3.5 h-3.5" />
-            <span>04. Ready-to-Deploy Checklist ({progressPct}%)</span>
-            <span className="text-[10px] px-1.5 py-0.2 bg-[#1a1a1a] rounded text-[#8e8d8a]">{readyItemsCount} Ready</span>
+            <span>{tx(`04. Dağıtım Kontrol Listesi (${progressPct}%)`, `04. Ready-to-Deploy Checklist (${progressPct}%)`)}</span>
+            <span className="text-[10px] px-1.5 py-0.2 bg-[#1a1a1a] rounded text-[#8e8d8a]">{readyItemsCount} {tx('Hazır', 'Ready')}</span>
           </button>
         </div>
 
@@ -554,10 +683,14 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-editorial text-xl text-[#f4f3ef] font-normal">
-                    Autonomous Editorial Research & 5-Factor Scoring
+                    {tx('Otonom Editoryal Araştırma ve 5 Faktörlü Puanlama', 'Autonomous Editorial Research & 5-Factor Scoring')}
                   </h3>
                   <p className="text-xs text-[#8e8d8a] mt-1">
-                    Server-side intelligence layer orchestrated via <span className="font-mono text-[#c5a880]">@google/genai</span> using <span className="font-mono text-[#f4f3ef]">gemini-3.8-flash</span>.
+                    {lang === 'tr' ? (
+                      <>Sunucu tarafı zeka katmanı, <span className="font-mono text-[#c5a880]">@google/genai</span> ve <span className="font-mono text-[#f4f3ef]">gemini-3.8-flash</span> ile yönetilir.</>
+                    ) : (
+                      <>Server-side intelligence layer orchestrated via <span className="font-mono text-[#c5a880]">@google/genai</span> using <span className="font-mono text-[#f4f3ef]">gemini-3.8-flash</span>.</>
+                    )}
                   </p>
                 </div>
                 <VisualStatusBadge status={isGeminiLive ? 'READY' : 'ACTION_REQUIRED'} />
@@ -568,11 +701,16 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Cpu className="w-4 h-4 text-[#c5a880]" />
                   <span>
-                    Backend Engine Status: <strong className="text-[#f4f3ef]">{isGeminiLive ? 'Gemini 3.8 Flash Live Connection' : 'Curatorial Fallback Engine (No API Key)'}</strong>
+                    {tx('Arka Uç Motor Durumu:', 'Backend Engine Status:')}{' '}
+                    <strong className="text-[#f4f3ef]">
+                      {isGeminiLive
+                        ? tx('Gemini 3.8 Flash Canlı Bağlantı', 'Gemini 3.8 Flash Live Connection')
+                        : tx('Kürasyon Yedek Motoru (API Anahtarı Yok)', 'Curatorial Fallback Engine (No API Key)')}
+                    </strong>
                   </span>
                 </div>
                 <span className="text-[11px] text-[#8e8d8a]">
-                  {isGeminiLive ? 'API Key Injected · Zero Mock Data' : 'Set GEMINI_API_KEY in Secrets'}
+                  {isGeminiLive ? tx('API Anahtarı Tanımlı · Sıfır Sahte Veri', 'API Key Injected · Zero Mock Data') : tx('Secrets Paneline GEMINI_API_KEY Ekleyin', 'Set GEMINI_API_KEY in Secrets')}
                 </span>
               </div>
 
@@ -580,25 +718,36 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880]">
-                    Autonomous Research Harvest
+                    {tx('Otonom Araştırma Hasadı', 'Autonomous Research Harvest')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Scans reputable archival fashion repositories (*Vogue Italia*, *Self Service*, *Purple*, *Harper's Bazaar*, *Dazed*, *The Gentlewoman*) for new candidate monographs.
+                    {tx(
+                      'Yeni aday monografiler için güvenilir arşiv moda kaynaklarını (*Vogue Italia*, *Self Service*, *Purple*, *Harper’s Bazaar*, *Dazed*, *The Gentlewoman*) tarar.',
+                      "Scans reputable archival fashion repositories (*Vogue Italia*, *Self Service*, *Purple*, *Harper's Bazaar*, *Dazed*, *The Gentlewoman*) for new candidate monographs."
+                    )}
                   </p>
                   <div className="text-[11px] font-mono text-[#d4d4d8] pt-1 border-t border-[#1e1e1e]">
-                    Target: Up to 20 candidates discovered daily.
+                    {tx('Hedef: Günlük en fazla 20 aday keşfi.', 'Target: Up to 20 candidates discovered daily.')}
                   </div>
                 </div>
 
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880]">
-                    Deduplication & Top 5 Selection
+                    {tx('Tekilleştirme ve İlk 5 Seçimi', 'Deduplication & Top 5 Selection')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Cross-references discovered titles against persistent storage (<span className="font-mono text-[10px] text-[#f4f3ef]">.data/editorial_db.json</span>). Evaluates and selects the highest scoring 5 works for the daily curation.
+                    {lang === 'tr' ? (
+                      <>Keşfedilen başlıkları kalıcı depolamayla (<span className="font-mono text-[10px] text-[#f4f3ef]">.data/editorial_db.json</span>) çapraz kontrol eder. Günlük kürasyon için en yüksek puanlı 5 eseri seçer.</>
+                    ) : (
+                      <>Cross-references discovered titles against persistent storage (<span className="font-mono text-[10px] text-[#f4f3ef]">.data/editorial_db.json</span>). Evaluates and selects the highest scoring 5 works for the daily curation.</>
+                    )}
                   </p>
                   <div className="text-[11px] font-mono text-[#d4d4d8] pt-1 border-t border-[#1e1e1e]">
-                    Result: Exactly 5 items tagged with <span className="text-[#c5a880]">isDailyTop5: true</span>.
+                    {lang === 'tr' ? (
+                      <>Sonuç: Tam olarak 5 öğe <span className="text-[#c5a880]">isDailyTop5: true</span> olarak işaretlenir.</>
+                    ) : (
+                      <>Result: Exactly 5 items tagged with <span className="text-[#c5a880]">isDailyTop5: true</span>.</>
+                    )}
                   </div>
                 </div>
               </div>
@@ -606,43 +755,43 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               {/* 5-Factor Scoring Formula Matrix */}
               <div className="space-y-3">
                 <h4 className="text-xs font-mono uppercase tracking-widest text-[#71717a]">
-                  5-Factor Curatorial Scoring Weight Distribution
+                  {tx('5 Faktörlü Kürasyon Puanlama Ağırlık Dağılımı', '5-Factor Curatorial Scoring Weight Distribution')}
                 </h4>
 
                 <div className="bg-[#141414] border border-[#222222] rounded overflow-hidden">
                   <table className="w-full text-left text-xs font-mono">
                     <thead className="bg-[#181818] border-b border-[#222222] text-[#8e8d8a] uppercase text-[10px]">
                       <tr>
-                        <th className="py-2.5 px-4">Evaluation Factor</th>
-                        <th className="py-2.5 px-4 text-center">Weight</th>
-                        <th className="py-2.5 px-4">Curatorial Criteria</th>
+                        <th className="py-2.5 px-4">{tx('Değerlendirme Faktörü', 'Evaluation Factor')}</th>
+                        <th className="py-2.5 px-4 text-center">{tx('Ağırlık', 'Weight')}</th>
+                        <th className="py-2.5 px-4">{tx('Kürasyon Kriterleri', 'Curatorial Criteria')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#1e1e1e]">
                       <tr>
-                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">Composition</td>
+                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">{tx('Kompozisyon', 'Composition')}</td>
                         <td className="py-2.5 px-4 text-center text-[#c5a880] font-bold">25%</td>
-                        <td className="py-2.5 px-4 text-[#8e8d8a]">Geometric discipline, architectural framing, brutalist balance, and negative space.</td>
+                        <td className="py-2.5 px-4 text-[#8e8d8a]">{tx('Geometrik disiplin, mimari kadraj, brütalist denge ve negatif alan kullanımı.', 'Geometric discipline, architectural framing, brutalist balance, and negative space.')}</td>
                       </tr>
                       <tr>
-                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">Lighting</td>
+                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">{tx('Işık', 'Lighting')}</td>
                         <td className="py-2.5 px-4 text-center text-[#c5a880] font-bold">20%</td>
-                        <td className="py-2.5 px-4 text-[#8e8d8a]">Chiaroscuro contrast, slow directional tungsten, natural raking daylight, and film grain.</td>
+                        <td className="py-2.5 px-4 text-[#8e8d8a]">{tx('Chiaroscuro kontrastı, yönlendirilmiş tungsten, doğal yan gün ışığı ve film greni.', 'Chiaroscuro contrast, slow directional tungsten, natural raking daylight, and film grain.')}</td>
                       </tr>
                       <tr>
-                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">Styling & Silhouette</td>
+                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">{tx('Stil ve Silüet', 'Styling & Silhouette')}</td>
                         <td className="py-2.5 px-4 text-center text-[#c5a880] font-bold">20%</td>
-                        <td className="py-2.5 px-4 text-[#8e8d8a]">Haute couture drapery, sharp tailored lines, and tactile textile materiality.</td>
+                        <td className="py-2.5 px-4 text-[#8e8d8a]">{tx('Haute couture drapaj, keskin terzi hatları ve dokunsal kumaş materyalitesi.', 'Haute couture drapery, sharp tailored lines, and tactile textile materiality.')}</td>
                       </tr>
                       <tr>
-                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">Cultural Relevance</td>
+                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">{tx('Kültürel Güncellik', 'Cultural Relevance')}</td>
                         <td className="py-2.5 px-4 text-center text-[#c5a880] font-bold">15%</td>
-                        <td className="py-2.5 px-4 text-[#8e8d8a]">Artistic longevity, historical monograph resonance, and avoidance of fast-fashion trends.</td>
+                        <td className="py-2.5 px-4 text-[#8e8d8a]">{tx('Sanatsal kalıcılık, tarihsel monografi rezonansı ve hızlı moda trendlerinden uzaklık.', 'Artistic longevity, historical monograph resonance, and avoidance of fast-fashion trends.')}</td>
                       </tr>
                       <tr>
-                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">Narrative Atmosphere</td>
+                        <td className="py-2.5 px-4 text-[#f4f3ef] font-semibold">{tx('Anlatı Atmosferi', 'Narrative Atmosphere')}</td>
                         <td className="py-2.5 px-4 text-center text-[#c5a880] font-bold">20%</td>
-                        <td className="py-2.5 px-4 text-[#8e8d8a]">Cinematic mood, emotional restraint, character presence, and tactile storytelling.</td>
+                        <td className="py-2.5 px-4 text-[#8e8d8a]">{tx('Sinematik ruh hali, duygusal ölçülülük, karakter varlığı ve dokunsal hikaye anlatımı.', 'Cinematic mood, emotional restraint, character presence, and tactile storytelling.')}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -653,10 +802,14 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="p-4 bg-[#141414] border border-[#2a2a2a] rounded space-y-2">
                 <div className="flex items-center gap-2 text-xs font-mono text-[#c5a880] uppercase tracking-wider">
                   <ShieldCheck className="w-4 h-4 text-[#c5a880]" />
-                  <span>Rights Clearance Policy: Zero Watermarking & Reference Cards</span>
+                  <span>{tx('Hak İzni Politikası: Sıfır Filigran ve Referans Kartları', 'Rights Clearance Policy: Zero Watermarking & Reference Cards')}</span>
                 </div>
                 <p className="text-xs text-[#8e8d8a]">
-                  Works with <span className="text-[#f4f3ef] font-mono">unlicensed</span> or <span className="text-[#f4f3ef] font-mono">pending</span> status are strictly blocked from publishing. Instead of a social media package, the platform generates a clean <strong className="text-[#f4f3ef]">Editorial Reference Card</strong> for research purposes only. The platform never watermarks or distorts third-party creative photography.
+                  {lang === 'tr' ? (
+                    <>Hak durumu <span className="text-[#f4f3ef] font-mono">unlicensed</span> veya <span className="text-[#f4f3ef] font-mono">pending</span> olan eserlerin yayınlanması kesinlikle engellenir. Sosyal medya paketi yerine yalnızca araştırma amaçlı temiz bir <strong className="text-[#f4f3ef]">Editoryal Referans Kartı</strong> üretilir. Platform üçüncü taraf yaratıcı fotoğrafları asla filigranlamaz veya bozmaz.</>
+                  ) : (
+                    <>Works with <span className="text-[#f4f3ef] font-mono">unlicensed</span> or <span className="text-[#f4f3ef] font-mono">pending</span> status are strictly blocked from publishing. Instead of a social media package, the platform generates a clean <strong className="text-[#f4f3ef]">Editorial Reference Card</strong> for research purposes only. The platform never watermarks or distorts third-party creative photography.</>
+                  )}
                 </p>
               </div>
             </div>
@@ -668,10 +821,13 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-editorial text-xl text-[#f4f3ef] font-normal">
-                    Meta Graph API v21.0 Instagram Publishing Adapter
+                    {tx('Meta Graph API v21.0 Instagram Yayın Adaptörü', 'Meta Graph API v21.0 Instagram Publishing Adapter')}
                   </h3>
                   <p className="text-xs text-[#8e8d8a] mt-1">
-                    Official OAuth-based integration adhering to Meta Business requirements without requesting user passwords.
+                    {tx(
+                      'Kullanıcı şifresi istemeden Meta Business gereksinimlerine tam uyumlu resmi OAuth tabanlı entegrasyon.',
+                      'Official OAuth-based integration adhering to Meta Business requirements without requesting user passwords.'
+                    )}
                   </p>
                 </div>
                 <VisualStatusBadge status={isIgLive ? 'READY' : 'ACTION_REQUIRED'} />
@@ -682,26 +838,36 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Share2 className="w-4 h-4 text-[#c5a880]" />
                   <span>
-                    Instagram Connection: <strong className="text-[#f4f3ef]">{isIgLive ? `@${liveInstagram?.username} (${liveInstagram?.accountType})` : 'Not Connected (Sandbox Simulation Mode)'}</strong>
+                    {tx('Instagram Bağlantısı:', 'Instagram Connection:')}{' '}
+                    <strong className="text-[#f4f3ef]">
+                      {isIgLive
+                        ? `@${liveInstagram?.username} (${liveInstagram?.accountType})`
+                        : tx('Bağlı Değil (Sandbox Simülasyon Modu)', 'Not Connected (Sandbox Simulation Mode)')}
+                    </strong>
                   </span>
                 </div>
                 <span className="text-[11px] text-[#8e8d8a]">
-                  {isIgLive ? `${liveInstagram?.permissions?.length || 3} Permissions Granted` : 'Configure in Settings > Instagram'}
+                  {isIgLive
+                    ? tx(`${liveInstagram?.permissions?.length || 3} İzin Onaylandı`, `${liveInstagram?.permissions?.length || 3} Permissions Granted`)
+                    : tx('Ayarlar > Instagram altından yapılandırın', 'Configure in Settings > Instagram')}
                 </span>
               </div>
 
               {/* Credential Setup Guide */}
               <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-3">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] block">
-                  Environment Credentials Setup
+                  {tx('Ortam Kimlik Bilgileri Kurulumu', 'Environment Credentials Setup')}
                 </span>
                 <p className="text-xs text-[#8e8d8a]">
-                  To connect a live Instagram Professional account (Business or Creator), provide the following environment variables in your runtime configuration:
+                  {tx(
+                    'Canlı bir Instagram Profesyonel hesabı (İşletme veya İçerik Üretici) bağlamak için çalışma zamanı yapılandırmanızda aşağıdaki ortam değişkenlerini tanımlayın:',
+                    'To connect a live Instagram Professional account (Business or Creator), provide the following environment variables in your runtime configuration:'
+                  )}
                 </p>
                 <div className="bg-[#0a0a0a] p-3 rounded border border-[#222222] font-mono text-xs text-[#f4f3ef] space-y-1">
-                  <div><span className="text-[#8e8d8a]"># Numeric Instagram Account ID (linked to Facebook Page)</span></div>
+                  <div><span className="text-[#8e8d8a]">{tx('# Facebook Sayfasına bağlı sayısal Instagram Hesap ID’si', '# Numeric Instagram Account ID (linked to Facebook Page)')}</span></div>
                   <div><span className="text-[#c5a880]">INSTAGRAM_ACCOUNT_ID</span>="17841400000000000"</div>
-                  <div className="pt-2"><span className="text-[#8e8d8a]"># Never-Expiring System User Page Access Token</span></div>
+                  <div className="pt-2"><span className="text-[#8e8d8a]">{tx('# Süresi Dolmayan Sistem Kullanıcısı Sayfa Erişim Belirteci', '# Never-Expiring System User Page Access Token')}</span></div>
                   <div><span className="text-[#c5a880]">INSTAGRAM_ACCESS_TOKEN</span>="EAA..."</div>
                 </div>
               </div>
@@ -709,20 +875,20 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               {/* Meta Container Endpoints Workflow */}
               <div className="space-y-3">
                 <h4 className="text-xs font-mono uppercase tracking-widest text-[#71717a]">
-                  Meta Container Publishing Lifecycle (2-Step Flow)
+                  {tx('Meta Kapsayıcı Yayın Yaşam Döngüsü (2 Adımlı Akış)', 'Meta Container Publishing Lifecycle (2-Step Flow)')}
                 </h4>
 
                 <div className="space-y-2 text-xs font-mono">
                   <div className="p-3 bg-[#141414] border border-[#222222] rounded space-y-1">
-                    <span className="text-[#c5a880] block">STEP 1: Create Media Container</span>
+                    <span className="text-[#c5a880] block">{tx('ADIM 1: Medya Kapsayıcısı Oluştur', 'STEP 1: Create Media Container')}</span>
                     <div className="text-[#8e8d8a]">POST https://graph.facebook.com/v21.0/&#123;ig-user-id&#125;/media</div>
-                    <div className="text-[11px] text-[#71717a]">Params: image_url, caption, access_token → Returns: &#123; id: "1792348293" &#125;</div>
+                    <div className="text-[11px] text-[#71717a]">{tx('Parametreler', 'Params')}: image_url, caption, access_token → {tx('Dönen', 'Returns')}: &#123; id: "1792348293" &#125;</div>
                   </div>
 
                   <div className="p-3 bg-[#141414] border border-[#222222] rounded space-y-1">
-                    <span className="text-[#7cd38b] block">STEP 2: Execute Publication</span>
+                    <span className="text-[#7cd38b] block">{tx('ADIM 2: Yayını Gerçekleştir', 'STEP 2: Execute Publication')}</span>
                     <div className="text-[#8e8d8a]">POST https://graph.facebook.com/v21.0/&#123;ig-user-id&#125;/media_publish</div>
-                    <div className="text-[11px] text-[#71717a]">Params: creation_id, access_token → Returns: &#123; id: "1802938472" &#125;</div>
+                    <div className="text-[11px] text-[#71717a]">{tx('Parametreler', 'Params')}: creation_id, access_token → {tx('Dönen', 'Returns')}: &#123; id: "1802938472" &#125;</div>
                   </div>
                 </div>
               </div>
@@ -730,10 +896,14 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               {/* Sandbox Simulation Note */}
               <div className="p-4 bg-[#141414] border border-[#262626] rounded space-y-2">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-[#8e8d8a] block">
-                  Deterministic Sandbox Simulation
+                  {tx('Deterministik Sandbox Simülasyonu', 'Deterministic Sandbox Simulation')}
                 </span>
                 <p className="text-xs text-[#8e8d8a]">
-                  When no live token is configured, the adapter automatically operates in <strong className="text-[#f4f3ef]">Sandbox Simulation Mode</strong>. It validates all permissions, logs container creation events, generates mock permalinks, and appends complete records to the persistent <span className="font-mono text-[#c5a880]">auditTrail</span>.
+                  {lang === 'tr' ? (
+                    <>Canlı bir belirteç tanımlanmadığında adaptör otomatik olarak <strong className="text-[#f4f3ef]">Sandbox Simülasyon Modunda</strong> çalışır. Tüm izinleri doğrular, kapsayıcı oluşturma olaylarını günlüğe kaydeder, simüle edilmiş kalıcı bağlantılar üretir ve tüm kayıtları kalıcı <span className="font-mono text-[#c5a880]">auditTrail</span> günlüğüne ekler.</>
+                  ) : (
+                    <>When no live token is configured, the adapter automatically operates in <strong className="text-[#f4f3ef]">Sandbox Simulation Mode</strong>. It validates all permissions, logs container creation events, generates mock permalinks, and appends complete records to the persistent <span className="font-mono text-[#c5a880]">auditTrail</span>.</>
+                  )}
                 </p>
               </div>
             </div>
@@ -744,44 +914,47 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="font-editorial text-xl text-[#f4f3ef] font-normal">
-                  Autopilot Orchestration & Safety Invariants
+                  {tx('Autopilot Orkestrasyonu ve Güvenlik Değişmezleri', 'Autopilot Orchestration & Safety Invariants')}
                 </h3>
                 <p className="text-xs text-[#8e8d8a] mt-1">
-                  Automated background publishing with Europe/Istanbul scheduling and multi-layer fail-safes.
+                  {tx(
+                    'Europe/Istanbul zamanlaması ve çok katmanlı güvenlik önlemleriyle otomatik arka plan yayınlama.',
+                    'Automated background publishing with Europe/Istanbul scheduling and multi-layer fail-safes.'
+                  )}
                 </p>
               </div>
 
               {/* Daily Schedule Timeline */}
               <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#c5a880] uppercase tracking-wider">Europe/Istanbul (UTC+3) Schedule</span>
-                  <span className="text-[#8e8d8a]">Persistent Background Execution</span>
+                  <span className="text-[#c5a880] uppercase tracking-wider">{tx('Europe/Istanbul (UTC+3) Takvimi', 'Europe/Istanbul (UTC+3) Schedule')}</span>
+                  <span className="text-[#8e8d8a]">{tx('Kalıcı Arka Plan Yürütmesi', 'Persistent Background Execution')}</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#c5a880] font-bold block">08:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">Autonomous Research</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('Otonom Araştırma', 'Autonomous Research')}</span>
                   </div>
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#c5a880] font-bold block">09:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">5-Factor Evaluation</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('5 Faktörlü Değerlendirme', '5-Factor Evaluation')}</span>
                   </div>
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#c5a880] font-bold block">10:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">Daily Top 5 Curation</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('Günlük İlk 5 Kürasyonu', 'Daily Top 5 Curation')}</span>
                   </div>
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#c5a880] font-bold block">11:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">Post Preparation</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('Gönderi Hazırlığı', 'Post Preparation')}</span>
                   </div>
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#7cd38b] font-bold block">14:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">First Publishing Slot</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('Birinci Yayın Slotu', 'First Publishing Slot')}</span>
                   </div>
                   <div className="p-2.5 bg-[#181818] border border-[#222222] rounded">
                     <span className="text-[#7cd38b] font-bold block">20:00</span>
-                    <span className="text-[#8e8d8a] text-[11px]">Second Publishing Slot</span>
+                    <span className="text-[#8e8d8a] text-[11px]">{tx('İkinci Yayın Slotu', 'Second Publishing Slot')}</span>
                   </div>
                 </div>
               </div>
@@ -790,37 +963,49 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] block">
-                    Emergency Stop Kill-Switch
+                    {tx('Acil Durdurma Anahtarı', 'Emergency Stop Kill-Switch')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Clicking the header Emergency Stop button instantly locks the automation engine. All background slots, draft publishing, and cron jobs immediately abort until manually cleared.
+                    {tx(
+                      'Üst başlıktaki Acil Durdurma düğmesine tıklamak otomasyon motorunu anında kilitler. Manuel olarak temizlenene kadar tüm arka plan slotları, taslak yayınları ve zamanlanmış görevler derhal durdurulur.',
+                      'Clicking the header Emergency Stop button instantly locks the automation engine. All background slots, draft publishing, and cron jobs immediately abort until manually cleared.'
+                    )}
                   </p>
                 </div>
 
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] block">
-                    Daily Publishing Limit Ceiling
+                    {tx('Günlük Yayın Limiti Tavanı', 'Daily Publishing Limit Ceiling')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Enforces a strict daily cap (default: 2 posts per day). Even in continuous Autopilot mode, the platform refuses to publish more than the configured quota.
+                    {tx(
+                      'Katı bir günlük sınır uygular (varsayılan: günde 2 gönderi). Sürekli Autopilot modunda bile platform yapılandırılan kotanın üzerinde yayın yapmayı reddeder.',
+                      'Enforces a strict daily cap (default: 2 posts per day). Even in continuous Autopilot mode, the platform refuses to publish more than the configured quota.'
+                    )}
                   </p>
                 </div>
 
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] block">
-                    SHA-256 Material Change Detector
+                    {tx('SHA-256 İçerik Değişikliği Algılayıcı', 'SHA-256 Material Change Detector')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Calculates a cryptographic hash of approved content. If an operator or API modifies the caption, photo URL, or rights notes, the post requires re-approval before broadcasting.
+                    {tx(
+                      'Onaylanmış içeriğin kriptografik özetini (hash) hesaplar. Bir operatör veya API; açıklamayı, fotoğraf URL’sini ya da hak notlarını değiştirirse gönderi yayından önce yeniden onay gerektirir.',
+                      'Calculates a cryptographic hash of approved content. If an operator or API modifies the caption, photo URL, or rights notes, the post requires re-approval before broadcasting.'
+                    )}
                   </p>
                 </div>
 
                 <div className="p-4 bg-[#141414] border border-[#222222] rounded space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#c5a880] block">
-                    No Silent Mode Transitions
+                    {tx('Sessiz Mod Geçişi Engeli', 'No Silent Mode Transitions')}
                   </span>
                   <p className="text-xs text-[#8e8d8a]">
-                    Autopilot cannot be enabled implicitly. It requires explicit user confirmation in UI and an authenticated Instagram Professional account connection.
+                    {tx(
+                      'Autopilot örtük olarak etkinleştirilemez. Arayüzde açık kullanıcı onayı ve doğrulanmış bir Instagram Profesyonel hesap bağlantısı gerektirir.',
+                      'Autopilot cannot be enabled implicitly. It requires explicit user confirmation in UI and an authenticated Instagram Professional account connection.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -835,10 +1020,13 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#141414] border border-[#222222] rounded">
                 <div>
                   <h3 className="font-editorial text-xl text-[#f4f3ef] font-normal">
-                    Production Readiness Audit Checklist
+                    {tx('Üretim Hazırlık Denetim Kontrol Listesi', 'Production Readiness Audit Checklist')}
                   </h3>
                   <p className="text-xs text-[#8e8d8a] mt-0.5">
-                    Separating functional codebase features from external cloud and Meta console configurations.
+                    {tx(
+                      'İşlevsel kod tabanı özelliklerini harici bulut ve Meta konsol yapılandırmalarından ayırır.',
+                      'Separating functional codebase features from external cloud and Meta console configurations.'
+                    )}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -846,7 +1034,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                     {progressPct}%
                   </span>
                   <span className="block text-[10px] font-mono text-[#8e8d8a] uppercase">
-                    {completedCount} of {totalCount} Items Verified
+                    {tx(`${completedCount} / ${totalCount} Öğe Doğrulandı`, `${completedCount} of ${totalCount} Items Verified`)}
                   </span>
                 </div>
               </div>
@@ -863,16 +1051,16 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               <div className="p-4 bg-[#121212] border border-[#262626] rounded space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[#c5a880]">
-                    Dynamic Service Integration State
+                    {tx('Dinamik Servis Entegrasyon Durumu', 'Dynamic Service Integration State')}
                   </span>
                   <button
                     onClick={fetchLiveStatus}
                     disabled={isRefreshing}
                     className="flex items-center gap-1 text-[11px] font-mono text-[#8e8d8a] hover:text-[#f4f3ef] transition cursor-pointer"
-                    title="Refresh live connection state"
+                    title={tx('Canlı bağlantı durumunu yenile', 'Refresh live connection state')}
                   >
                     <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-[#c5a880]' : ''}`} />
-                    <span>{isRefreshing ? 'Checking...' : 'Refresh Status'}</span>
+                    <span>{isRefreshing ? tx('Kontrol ediliyor...', 'Checking...') : tx('Durumu Yenile', 'Refresh Status')}</span>
                   </button>
                 </div>
 
@@ -882,9 +1070,11 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                     <div className="flex items-center gap-2.5">
                       <Cpu className="w-4 h-4 text-[#c5a880] shrink-0" />
                       <div>
-                        <div className="text-xs text-[#f4f3ef] font-medium">Gemini 3.8 Flash Backend</div>
+                        <div className="text-xs text-[#f4f3ef] font-medium">{tx('Gemini 3.8 Flash Arka Ucu', 'Gemini 3.8 Flash Backend')}</div>
                         <div className="text-[10px] text-[#8e8d8a]">
-                          {isGeminiLive ? 'API Key Active · Live 5-Factor Scoring' : 'API Key Missing · Deterministic Fallback'}
+                          {isGeminiLive
+                            ? tx('API Anahtarı Aktif · Canlı 5 Faktörlü Puanlama', 'API Key Active · Live 5-Factor Scoring')
+                            : tx('API Anahtarı Eksik · Deterministik Yedek', 'API Key Missing · Deterministic Fallback')}
                         </div>
                       </div>
                     </div>
@@ -898,7 +1088,9 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                       <div>
                         <div className="text-xs text-[#f4f3ef] font-medium">Instagram Meta Graph API</div>
                         <div className="text-[10px] text-[#8e8d8a]">
-                          {isIgLive ? `@${liveInstagram?.username || 'theeditorialindex'} · Connected` : 'Disconnected · Sandbox Simulation Mode'}
+                          {isIgLive
+                            ? `@${liveInstagram?.username || 'theeditorialindex'} · ${tx('Bağlı', 'Connected')}`
+                            : tx('Bağlı Değil · Sandbox Simülasyon Modu', 'Disconnected · Sandbox Simulation Mode')}
                         </div>
                       </div>
                     </div>
@@ -908,9 +1100,9 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center justify-between gap-2 border-b border-[#222222] pb-2 text-xs font-mono">
-                <div className="flex items-center gap-2">
-                  <span className="text-[#71717a] text-[11px] mr-1">Filter View:</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#222222] pb-2 text-xs font-mono">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[#71717a] text-[11px] mr-1">{tx('Görünümü Filtrele:', 'Filter View:')}</span>
                   <button
                     onClick={() => setFilterMode('all')}
                     className={`px-2.5 py-1 rounded text-[11px] transition cursor-pointer ${
@@ -919,7 +1111,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                         : 'text-[#8e8d8a] hover:text-[#d4d4d8]'
                     }`}
                   >
-                    All Items ({totalCount})
+                    {tx(`Tüm Öğeler (${totalCount})`, `All Items (${totalCount})`)}
                   </button>
                   <button
                     onClick={() => setFilterMode('ready')}
@@ -930,7 +1122,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#7cd38b]" />
-                    Ready ({readyItemsCount})
+                    {tx(`Hazır (${readyItemsCount})`, `Ready (${readyItemsCount})`)}
                   </button>
                   <button
                     onClick={() => setFilterMode('action_required')}
@@ -941,12 +1133,12 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#e09f58]" />
-                    Action Required ({actionRequiredCount})
+                    {tx(`İşlem Gerekli (${actionRequiredCount})`, `Action Required (${actionRequiredCount})`)}
                   </button>
                 </div>
 
                 <div className="text-[11px] text-[#71717a]">
-                  Click item to toggle audit verification
+                  {tx('Denetim doğrulamasını değiştirmek için öğeye tıklayın', 'Click item to toggle audit verification')}
                 </div>
               </div>
 
@@ -957,10 +1149,10 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-[#c5a880] uppercase tracking-wider font-semibold">
-                        Part A: Codebase Architecture & Internal Engines
+                        {tx('Bölüm A: Kod Tabanı Mimarisi ve İç Motorlar', 'Part A: Codebase Architecture & Internal Engines')}
                       </span>
                       <span className="text-[#71717a]">
-                        {filteredItems.filter(i => i.category === 'codebase').length} Items
+                        {filteredItems.filter(i => i.category === 'codebase').length} {tx('Öğe', 'Items')}
                       </span>
                     </div>
 
@@ -1011,10 +1203,10 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
                   <div className="space-y-2.5 pt-2">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-[#c5a880] uppercase tracking-wider font-semibold">
-                        Part B: External Cloud & Meta Console Prerequisites
+                        {tx('Bölüm B: Harici Bulut ve Meta Konsol Ön Koşulları', 'Part B: External Cloud & Meta Console Prerequisites')}
                       </span>
                       <span className="text-[#71717a]">
-                        {filteredItems.filter(i => i.category === 'production').length} Items
+                        {filteredItems.filter(i => i.category === 'production').length} {tx('Öğe', 'Items')}
                       </span>
                     </div>
 
@@ -1067,17 +1259,17 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
 
         {/* Modal Footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-3.5 border-t border-[#222222] bg-[#141414] text-xs font-mono">
-          <div className="flex items-center gap-3 text-[#8e8d8a]">
-            <span>Vol. 01 Curation Engine</span>
+          <div className="flex flex-wrap items-center gap-3 text-[#8e8d8a]">
+            <span>{tx('Vol. 01 Kürasyon Motoru', 'Vol. 01 Curation Engine')}</span>
             <span>·</span>
-            <span>Platform Status: Operational</span>
+            <span>{tx('Platform Durumu: Çalışıyor', 'Platform Status: Operational')}</span>
             <span>·</span>
             <span className={isGeminiLive ? 'text-[#7cd38b]' : 'text-[#e09f58]'}>
-              Gemini: {isGeminiLive ? 'Ready' : 'Action Required'}
+              Gemini: {isGeminiLive ? tx('Hazır', 'Ready') : tx('İşlem Gerekli', 'Action Required')}
             </span>
             <span>·</span>
             <span className={isIgLive ? 'text-[#7cd38b]' : 'text-[#e09f58]'}>
-              Instagram: {isIgLive ? 'Ready' : 'Action Required'}
+              Instagram: {isIgLive ? tx('Hazır', 'Ready') : tx('İşlem Gerekli', 'Action Required')}
             </span>
           </div>
 
@@ -1086,7 +1278,7 @@ export const AgentIntegrationModal: React.FC<AgentIntegrationModalProps> = ({
               onClick={onClose}
               className="px-4 py-1.5 bg-[#222222] hover:bg-[#2c2c2c] text-[#f4f3ef] rounded transition cursor-pointer"
             >
-              Close Technical Guide
+              {tx('Teknik Kılavuzu Kapat', 'Close Technical Guide')}
             </button>
           </div>
         </div>

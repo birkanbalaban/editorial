@@ -20,6 +20,7 @@ import {
   List,
   Plus,
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface DailySelectionViewProps {
   top5Posts: EditorialPost[];
@@ -42,6 +43,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
   onNavigateToAiSearch,
   isProcessingAction,
 }) => {
+  const { tx, formatPostStatus } = useLanguage();
   const [activeTab, setActiveTab] = useState<'top5' | 'candidates' | 'saved'>('top5');
   const [viewLayout, setViewLayout] = useState<'detailed' | 'compact'>('detailed');
   const [expandedScores, setExpandedScores] = useState<Record<string, boolean>>({});
@@ -92,21 +94,21 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
         return (
           <span className="inline-flex items-center gap-1.5 text-xs text-[#a3e635] font-medium">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Verified Source
+            {tx('Doğrulanmış Kaynak', 'Verified Source')}
           </span>
         );
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1.5 text-xs text-[#facc15] font-medium">
             <Clock className="w-3.5 h-3.5" />
-            Rights Pending
+            {tx('Haklar Beklemede', 'Rights Pending')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 text-xs text-[#c5a880] font-medium">
             <ShieldAlert className="w-3.5 h-3.5" />
-            Reference Advisory
+            {tx('Referans Danışma', 'Reference Advisory')}
           </span>
         );
     }
@@ -118,7 +120,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#222222] pb-5">
         <div>
           <h1 className="font-editorial text-3xl md:text-4xl text-[#f4f3ef] font-normal tracking-tight">
-            Daily Editorial Selection
+            {tx('Günlük Editoryal Seçim', 'Daily Editorial Selection')}
           </h1>
         </div>
 
@@ -129,7 +131,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
               className="px-4 py-2 bg-[#c5a880] hover:bg-[#d4b992] text-[#0a0a0a] text-xs font-mono font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Open AI Search Engine</span>
+              <span>{tx('AI Arama Motorunu Aç', 'Open AI Search Engine')}</span>
             </button>
           )}
           <button
@@ -137,7 +139,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
             className="px-4 py-2 bg-[#1a1a1a] border border-[#333333] hover:border-[#c5a880] text-xs font-mono uppercase tracking-wider text-[#f4f3ef] rounded transition cursor-pointer flex items-center gap-2 font-medium whitespace-nowrap shrink-0"
           >
             <Plus className="w-3.5 h-3.5 text-[#c5a880]" />
-            <span>Add Post / Import URL</span>
+            <span>{tx('Gönderi Ekle / URL İçe Aktar', 'Add Post / Import URL')}</span>
           </button>
         </div>
       </div>
@@ -153,7 +155,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                 : 'text-[#8e8d8a] hover:text-[#f4f3ef]'
             }`}
           >
-            Curated Top 5 ({top5Posts.length})
+            {tx('Kürasyon İlk 5', 'Curated Top 5')} ({top5Posts.length})
           </button>
           <button
             onClick={() => setActiveTab('candidates')}
@@ -163,7 +165,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                 : 'text-[#8e8d8a] hover:text-[#f4f3ef]'
             }`}
           >
-            Discovery Pool ({candidates.length})
+            {tx('Keşif Havuzu', 'Discovery Pool')} ({candidates.length})
           </button>
           <button
             onClick={() => setActiveTab('saved')}
@@ -173,7 +175,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                 : 'text-[#8e8d8a] hover:text-[#f4f3ef]'
             }`}
           >
-            Saved ({savedPosts.length})
+            {tx('Kaydedilenler', 'Saved')} ({savedPosts.length})
           </button>
         </div>
 
@@ -187,10 +189,10 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                   ? 'bg-[#222222] text-[#f4f3ef] font-semibold'
                   : 'text-[#8e8d8a] hover:text-[#f4f3ef]'
               }`}
-              title="Full editorial view with inline shoot gallery selector"
+              title={tx('Satır içi çekim galerisi seçicisiyle tam editoryal görünüm', 'Full editorial view with inline shoot gallery selector')}
             >
               <List className="w-3.5 h-3.5" />
-              <span>Detailed</span>
+              <span>{tx('Detaylı', 'Detailed')}</span>
             </button>
             <button
               onClick={() => setViewLayout('compact')}
@@ -199,10 +201,10 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                   ? 'bg-[#222222] text-[#c5a880] font-semibold'
                   : 'text-[#8e8d8a] hover:text-[#f4f3ef]'
               }`}
-              title="Compact 3-column gallery grid"
+              title={tx('Kompakt 3 sütunlu galeri ızgarası', 'Compact 3-column gallery grid')}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Compact Grid</span>
+              <span>{tx('Kompakt Izgara', 'Compact Grid')}</span>
             </button>
           </div>
         </div>
@@ -213,22 +215,25 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
         <div className="text-center py-16 border border-dashed border-[#222222] rounded bg-[#121212] space-y-3">
           <p className="text-sm text-[#8e8d8a] font-sans">
             {activeTab === 'saved'
-              ? 'No saved editorial works yet. Bookmark any shoot to keep it here for later curation.'
-              : 'No editorial works currently in this pool.'}
+              ? tx(
+                  'Henüz kaydedilmiş editoryal çalışma yok. Daha sonra incelemek için herhangi bir çekimi kaydedin.',
+                  'No saved editorial works yet. Bookmark any shoot to keep it here for later curation.'
+                )
+              : tx('Bu havuzda şu anda editoryal çalışma bulunmuyor.', 'No editorial works currently in this pool.')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={onOpenAiResearch}
               className="px-4 py-2 bg-[#1a1a1a] border border-[#333333] hover:border-[#c5a880] text-[#f4f3ef] text-xs font-mono uppercase rounded cursor-pointer"
             >
-              Add Post / Import URL
+              {tx('Gönderi Ekle / URL İçe Aktar', 'Add Post / Import URL')}
             </button>
             {onNavigateToAiSearch && (
               <button
                 onClick={onNavigateToAiSearch}
                 className="px-4 py-2 bg-[#c5a880] text-[#0a0a0a] text-xs font-mono font-semibold uppercase rounded cursor-pointer"
               >
-                Fetch Live Articles in AI Search
+                {tx('AI Arama ile Canlı Makale Çek', 'Fetch Live Articles in AI Search')}
               </button>
             )}
           </div>
@@ -261,7 +266,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-[#71717a]">
-                        No preview
+                        {tx('Önizleme yok', 'No preview')}
                       </div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
@@ -270,10 +275,10 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     </div>
                     <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[10px] font-mono">
                       <span className="text-[#c5a880] uppercase font-semibold">
-                        {selectedFrames.length} / {shootGallery.length} Frames
+                        {selectedFrames.length} / {shootGallery.length} {tx('Kare', 'Frames')}
                       </span>
                       <span className="text-[#d4d4d8] uppercase">
-                        {post.status === 'selected' ? 'In Queue' : post.status}
+                        {formatPostStatus(post.status)}
                       </span>
                     </div>
                   </div>
@@ -305,15 +310,17 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     >
                       <Layers className="w-3.5 h-3.5" />
                       <span>
-                        {post.status === 'selected' ? 'Update Queue' : 'Send to Queue'}
+                        {post.status === 'selected'
+                          ? tx('Kuyruğu Güncelle', 'Update Queue')
+                          : tx('Kuyruğa Gönder', 'Send to Queue')}
                       </span>
                     </button>
                     <button
                       onClick={() => setViewLayout('detailed')}
                       className="px-2.5 py-2 bg-[#1a1a1a] hover:bg-[#242424] border border-[#2a2a2a] text-[11px] font-mono text-[#d4d4d8] rounded cursor-pointer"
-                      title="Switch to Detailed View to pick individual Carousel frames"
+                      title={tx('Tek tek Carousel kareleri seçmek için Detaylı Görünüme geç', 'Switch to Detailed View to pick individual Carousel frames')}
                     >
-                      Frames
+                      {tx('Kareler', 'Frames')}
                     </button>
                   </div>
 
@@ -327,7 +334,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                           className="text-[#8e8d8a] hover:text-[#c5a880] inline-flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
-                          <span>Article</span>
+                          <span>{tx('Makale', 'Article')}</span>
                         </a>
                       )}
                       <button
@@ -337,7 +344,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         disabled={isProcessingAction}
                         className="text-[#a1a1aa] hover:text-[#f4f3ef] cursor-pointer"
                       >
-                        Skip Queue →
+                        {tx('Kuyruğu Atla →', 'Skip Queue →')}
                       </button>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -345,7 +352,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         onClick={() => onAction(post.id, 'save')}
                         disabled={isProcessingAction}
                         className="p-1.5 text-[#8e8d8a] hover:text-[#c5a880] cursor-pointer"
-                        title="Save for Later"
+                        title={tx('Sonrası İçin Kaydet', 'Save for Later')}
                       >
                         <Bookmark className="w-3.5 h-3.5" />
                       </button>
@@ -353,7 +360,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         onClick={() => onAction(post.id, 'reject')}
                         disabled={isProcessingAction}
                         className="p-1.5 text-[#8e8d8a] hover:text-[#ef4444] cursor-pointer"
-                        title="Reject Selection"
+                        title={tx('Seçimi Reddet', 'Reject Selection')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -399,7 +406,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                       />
                     ) : (
                       <div className="p-8 text-center text-xs text-[#8e8d8a]">
-                        No preview available
+                        {tx('Önizleme mevcut değil', 'No preview available')}
                       </div>
                     )}
 
@@ -417,7 +424,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                             }))
                           }
                           className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
-                          title="Previous frame"
+                          title={tx('Önceki kare', 'Previous frame')}
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -430,7 +437,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                             }))
                           }
                           className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-[#0a0a0a]/85 border border-[#333333] text-[#f4f3ef] hover:border-[#c5a880] cursor-pointer"
-                          title="Next frame"
+                          title={tx('Sonraki kare', 'Next frame')}
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -440,7 +447,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     {/* Top Overlay Badge for Score & Rights */}
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                       <div className="bg-[#0a0a0a]/85 backdrop-blur-md px-2.5 py-1 rounded border border-[#262626] text-xs font-mono font-semibold text-[#f4f3ef] tabular-nums">
-                        SCORE {post.score.overall}/100
+                        {tx('PUAN', 'SCORE')} {post.score.overall}/100
                       </div>
                       <div className="bg-[#0a0a0a]/85 backdrop-blur-md px-2.5 py-1 rounded border border-[#262626]">
                         {rightsBadge(post.rightsStatus)}
@@ -452,11 +459,14 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                       <span className="bg-[#0a0a0a]/85 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] uppercase font-mono text-[#c5a880] border border-[#c5a880]/40 flex items-center gap-1.5 tabular-nums">
                         <Layers className="w-3 h-3" />
                         <span>
-                          Frame {currentSlide + 1} of {selectedFrames.length} Selected
+                          {tx(
+                            `Kare ${currentSlide + 1} / ${selectedFrames.length} Seçili`,
+                            `Frame ${currentSlide + 1} of ${selectedFrames.length} Selected`
+                          )}
                         </span>
                       </span>
                       <span className="bg-[#0a0a0a]/85 px-2 py-1 rounded text-[10px] font-mono text-[#8e8d8a] border border-[#222222] tabular-nums">
-                        Shoot Total: {shootGallery.length} Photos
+                        {tx('Çekim Toplamı', 'Shoot Total')}: {shootGallery.length} {tx('Fotoğraf', 'Photos')}
                       </span>
                     </div>
                   </div>
@@ -465,10 +475,16 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                   <div className="p-3.5 bg-[#0e0e0e] border-t border-[#1e1e1e] space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono uppercase">
                       <span className="text-[#c5a880] font-semibold">
-                        This Article's Shoot Gallery ({shootGallery.length} Photos)
+                        {tx(
+                          `Bu Makalenin Çekim Galerisi (${shootGallery.length} Fotoğraf)`,
+                          `This Article's Shoot Gallery (${shootGallery.length} Photos)`
+                        )}
                       </span>
                       <span className="text-[#8e8d8a]">
-                        Click photos to select ({selectedFrames.length} chosen)
+                        {tx(
+                          `Seçmek için fotoğraflara tıklayın (${selectedFrames.length} seçili)`,
+                          `Click photos to select (${selectedFrames.length} chosen)`
+                        )}
                       </span>
                     </div>
 
@@ -492,8 +508,14 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                               className="w-full h-full block cursor-pointer"
                               title={
                                 isSelected
-                                  ? `Selected as Frame #${orderIndex + 1} (click to remove)`
-                                  : 'Click to add this photograph to the post Carousel'
+                                  ? tx(
+                                      `Kare #${orderIndex + 1} olarak seçili (kaldırmak için tıklayın)`,
+                                      `Selected as Frame #${orderIndex + 1} (click to remove)`
+                                    )
+                                  : tx(
+                                      'Bu fotoğrafı gönderi Carousel\'ine eklemek için tıklayın',
+                                      'Click to add this photograph to the post Carousel'
+                                    )
                               }
                             >
                               <img
@@ -514,10 +536,10 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                               }`}
                             >
                               {orderIndex === 0
-                                ? '1. Cover'
+                                ? tx('1. Kapak', '1. Cover')
                                 : isSelected
-                                ? `${orderIndex + 1}. Frame`
-                                : `+ Select`}
+                                ? `${orderIndex + 1}. ${tx('Kare', 'Frame')}`
+                                : tx('+ Seç', '+ Select')}
                             </span>
 
                             {isSelected && orderIndex > 0 && (
@@ -528,9 +550,9 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                                   handleMakeCover(post, imgUrl);
                                 }}
                                 className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-[#0a0a0a]/90 border border-[#c5a880]/50 text-[8px] font-mono text-[#c5a880] hover:bg-[#c5a880] hover:text-[#0a0a0a] cursor-pointer"
-                                title="Set as #1 Cover Photo"
+                                title={tx('#1 Kapak Fotoğrafı Yap', 'Set as #1 Cover Photo')}
                               >
-                                Make #1
+                                {tx('#1 Yap', 'Make #1')}
                               </button>
                             )}
                           </div>
@@ -553,7 +575,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         <span>{post.publicationDate}</span>
                         <span aria-hidden="true">·</span>
                         <span className="uppercase text-[#d4d4d8]">
-                          {post.status === 'selected' ? 'In Approval Queue' : post.status}
+                          {post.status === 'selected' ? tx('Onay Kuyruğunda', 'In Approval Queue') : formatPostStatus(post.status)}
                         </span>
                       </div>
 
@@ -563,10 +585,10 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#181818] hover:bg-[#222222] border border-[#2e2e2e] hover:border-[#c5a880] text-xs font-mono text-[#c5a880] transition"
-                          title="Open original article in new tab"
+                          title={tx('Orijinal makaleyi yeni sekmede aç', 'Open original article in new tab')}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
-                          <span>Verify Original Article ({post.publication})</span>
+                          <span>{tx('Orijinal Makaleyi Doğrula', 'Verify Original Article')} ({post.publication})</span>
                         </a>
                       )}
                     </div>
@@ -580,7 +602,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     <div className="text-xs text-[#a1a1aa] space-y-1 mb-4 font-sans">
                       <p>
                         <span className="text-[#71717a] uppercase tracking-wider text-[10px]">
-                          Author / Photographer:{' '}
+                          {tx('Yazar / Fotoğrafçı:', 'Author / Photographer:')}{' '}
                         </span>
                         <span className="text-[#f4f3ef] font-medium">{post.photographer}</span>
                       </p>
@@ -589,7 +611,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     {/* Article Excerpt / Creative Direction */}
                     <div className="p-3.5 bg-[#181818] rounded border border-[#262626] text-xs text-[#d4d4d8] leading-relaxed mb-4">
                       <span className="text-[10px] uppercase tracking-wider text-[#8e8d8a] block font-mono mb-1">
-                        Original Article Summary & Shoot Context
+                        {tx('Orijinal Makale Özeti & Çekim Bağlamı', 'Original Article Summary & Shoot Context')}
                       </span>
                       {post.creativeDirection}
                     </div>
@@ -601,7 +623,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         className="w-full px-3.5 py-2.5 bg-[#161616] flex items-center justify-between text-xs text-[#a1a1aa] hover:text-[#f4f3ef] transition cursor-pointer"
                       >
                         <span className="font-mono text-[11px] uppercase tracking-wider tabular-nums">
-                          Evaluation Breakdown ({post.score.overall}/100)
+                          {tx('Değerlendirme Dökümü', 'Evaluation Breakdown')} ({post.score.overall}/100)
                         </span>
                         {isScoreExpanded ? (
                           <ChevronUp className="w-4 h-4 text-[#8e8d8a]" />
@@ -614,31 +636,31 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         <div className="p-4 bg-[#141414] border-t border-[#222222] text-xs space-y-3 font-mono">
                           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center tabular-nums">
                             <div className="p-2 bg-[#1c1c1c] rounded">
-                              <span className="block text-[10px] text-[#71717a]">Composition</span>
+                              <span className="block text-[10px] text-[#71717a]">{tx('Kompozisyon', 'Composition')}</span>
                               <span className="text-sm font-semibold text-[#f4f3ef]">
                                 {post.score.composition}
                               </span>
                             </div>
                             <div className="p-2 bg-[#1c1c1c] rounded">
-                              <span className="block text-[10px] text-[#71717a]">Lighting</span>
+                              <span className="block text-[10px] text-[#71717a]">{tx('Işık', 'Lighting')}</span>
                               <span className="text-sm font-semibold text-[#f4f3ef]">
                                 {post.score.lighting}
                               </span>
                             </div>
                             <div className="p-2 bg-[#1c1c1c] rounded">
-                              <span className="block text-[10px] text-[#71717a]">Styling</span>
+                              <span className="block text-[10px] text-[#71717a]">{tx('Stil', 'Styling')}</span>
                               <span className="text-sm font-semibold text-[#f4f3ef]">
                                 {post.score.styling}
                               </span>
                             </div>
                             <div className="p-2 bg-[#1c1c1c] rounded">
-                              <span className="block text-[10px] text-[#71717a]">Relevance</span>
+                              <span className="block text-[10px] text-[#71717a]">{tx('Kültürel Etki', 'Relevance')}</span>
                               <span className="text-sm font-semibold text-[#f4f3ef]">
                                 {post.score.culturalRelevance}
                               </span>
                             </div>
                             <div className="p-2 bg-[#1c1c1c] rounded">
-                              <span className="block text-[10px] text-[#71717a]">Narrative</span>
+                              <span className="block text-[10px] text-[#71717a]">{tx('Anlatım', 'Narrative')}</span>
                               <span className="text-sm font-semibold text-[#f4f3ef]">
                                 {post.score.narrative}
                               </span>
@@ -654,13 +676,13 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                     {/* Instagram Caption Preview */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-[#71717a] font-mono">
-                        <span>Prepared Instagram Caption</span>
+                        <span>{tx('Hazırlanan Instagram Metni (EN)', 'Prepared Instagram Caption')}</span>
                         <button
                           onClick={() => onOpenCaptionEditor(post)}
                           className="text-[#c5a880] hover:text-[#e4d4c0] flex items-center gap-1 cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>Edit Caption</span>
+                          <span>{tx('Metni Düzenle', 'Edit Caption')}</span>
                         </button>
                       </div>
                       <div className="p-3 bg-[#0a0a0a] rounded border border-[#1e1e1e] text-xs text-[#a1a1aa] font-mono whitespace-pre-line line-clamp-3">
@@ -683,8 +705,8 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                       <Layers className="w-3.5 h-3.5" />
                       <span>
                         {post.status === 'selected'
-                          ? `Update in Approval Queue (${selectedFrames.length} Frames)`
-                          : `Send to Approval Queue (${selectedFrames.length} Frames)`}
+                          ? tx(`Onay Kuyruğunu Güncelle (${selectedFrames.length} Kare)`, `Update in Approval Queue (${selectedFrames.length} Frames)`)
+                          : tx(`Onay Kuyruğuna Gönder (${selectedFrames.length} Kare)`, `Send to Approval Queue (${selectedFrames.length} Frames)`)}
                       </span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -698,17 +720,17 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         }
                         disabled={isProcessingAction}
                         className="px-3 py-2 bg-[#161616] hover:bg-[#222222] border border-[#2a2a2a] hover:border-[#3f3f46] text-[#d4d4d8] text-[11px] font-mono uppercase tracking-wider rounded transition cursor-pointer flex items-center gap-1.5"
-                        title="Bypass Approval Queue and send directly to Post Packages"
+                        title={tx('Onay Kuyruğunu atla ve doğrudan Post Paketlerine gönder', 'Bypass Approval Queue and send directly to Post Packages')}
                       >
                         <Check className="w-3.5 h-3.5 text-[#a3e635]" />
-                        <span>Skip Queue</span>
+                        <span>{tx('Kuyruğu Atla', 'Skip Queue')}</span>
                       </button>
 
                       <button
                         onClick={() => onAction(post.id, 'save')}
                         disabled={isProcessingAction}
                         className="p-2 bg-[#161616] border border-[#262626] hover:text-[#c5a880] text-[#8e8d8a] rounded transition cursor-pointer"
-                        title="Save for Later"
+                        title={tx('Sonrası İçin Kaydet', 'Save for Later')}
                       >
                         <Bookmark className="w-4 h-4" />
                       </button>
@@ -717,7 +739,7 @@ export const DailySelectionView: React.FC<DailySelectionViewProps> = ({
                         onClick={() => onAction(post.id, 'reject')}
                         disabled={isProcessingAction}
                         className="p-2 bg-[#161616] border border-[#262626] hover:text-[#ef4444] text-[#8e8d8a] rounded transition cursor-pointer"
-                        title="Reject Selection"
+                        title={tx('Seçimi Reddet', 'Reject Selection')}
                       >
                         <X className="w-4 h-4" />
                       </button>
