@@ -662,6 +662,12 @@ export default function App() {
       <Header
         currentTab={currentTab}
         onTabChange={setCurrentTab}
+        onNavigateToModes={() => {
+          setCurrentTab('settings');
+          setTimeout(() => {
+            document.getElementById('operating-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 60);
+        }}
         mode={settings.mode}
         emergencyStop={settings.emergencyStop}
         onToggleEmergencyStop={handleToggleEmergencyStop}

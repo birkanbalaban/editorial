@@ -710,7 +710,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       )}
 
       {/* Operation Mode Selection */}
-      <div className="space-y-4">
+      <div id="operating-modes" className="space-y-4 scroll-mt-32">
         <div className="flex items-center justify-between">
           <h2 className="text-xs uppercase tracking-widest text-[#71717a] font-mono">
             {tx('Çalışma Modu Seçimi', 'Operating Mode Selection')}

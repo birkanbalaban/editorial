@@ -6,6 +6,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 interface HeaderProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
+  onNavigateToModes?: () => void;
   mode: OperationMode;
   emergencyStop: boolean;
   onToggleEmergencyStop: () => void;
@@ -15,6 +16,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentTab,
   onTabChange,
+  onNavigateToModes,
   mode,
   emergencyStop,
   onToggleEmergencyStop,
@@ -40,8 +42,16 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'settings', label: tx('Ayarlar', 'Settings') },
   ];
 
+  const handleModeClick = () => {
+    if (onNavigateToModes) {
+      onNavigateToModes();
+    } else {
+      onTabChange('settings');
+    }
+  };
+
   return (
-    <header className="border-b border-[#222222] bg-[#0d0d0d]/90 backdrop-blur-md sticky top-0 z-40 transition-colors">
+    <header className="border-b border-[#222222] bg-[#0d0d0d]/95 backdrop-blur-md sticky top-0 z-40 transition-colors">
       {/* Emergency Stop Strip if Active */}
       {emergencyStop && (
         <div className="bg-[#450a0a] border-b border-[#7f1d1d] px-6 py-2 flex items-center justify-between gap-4 text-xs text-[#fca5a5]">
@@ -63,9 +73,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       )}
 
-      {/* Top Bar 3-Zone Contract */}
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 overflow-hidden">
-        {/* Zone 1: Brand Wordmark */}
+      {/* Top Row: Brand Wordmark + Utility Controls */}
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+        {/* Brand Wordmark */}
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => onTabChange('daily-selection')}
@@ -80,30 +90,18 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: Clean single-line nav links for desktop */}
-        <nav className="hidden xl:flex items-center gap-3.5 text-[11px] tracking-wider uppercase font-medium overflow-x-auto no-scrollbar min-w-0">
-          {tabs.map((tab) => {
-            const isActive = currentTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={`transition-colors whitespace-nowrap cursor-pointer pb-1 border-b shrink-0 ${
-                  isActive
-                    ? 'text-[#f4f3ef] border-[#c5a880]'
-                    : 'text-[#8e8d8a] border-transparent hover:text-[#d4d4d8]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Zone 3: Mode Status, 1-Click TR/EN Switcher & Emergency Control */}
+        {/* Mode Selector Shortcut, 1-Click TR/EN Switcher & Emergency Control */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Mode Indicator */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#181818] border border-[#262626] text-xs whitespace-nowrap shrink-0">
+          {/* Interactive Mode Indicator (jumps to Operating Mode Selection in Settings) */}
+          <button
+            type="button"
+            onClick={handleModeClick}
+            title={tx(
+              'Çalışma Modu Seçimine git (Manuel / Onaylı / Otopilot)',
+              'Go to Operating Mode Selection (Manual / Approval / Autopilot)'
+            )}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[#181818] hover:bg-[#202020] border border-[#262626] hover:border-[#c5a880]/60 text-xs whitespace-nowrap shrink-0 transition cursor-pointer"
+          >
             <span className="text-[10px] uppercase tracking-wider text-[#8e8d8a] hidden sm:inline">
               {tx('Mod', 'Mode')}
             </span>
@@ -111,9 +109,9 @@ export const Header: React.FC<HeaderProps> = ({
               {formatMode(mode)}
             </span>
             {mode === 'AUTOPILOT' && <Zap className="w-3 h-3 text-[#c5a880]" />}
-            {mode === 'APPROVAL' && <CheckCircle2 className="w-3 h-3 text-[#a1a1aa]" />}
-            {mode === 'MANUAL' && <ShieldCheck className="w-3 h-3 text-[#71717a]" />}
-          </div>
+            {mode === 'APPROVAL' && <CheckCircle2 className="w-3 h-3 text-[#c5a880]" />}
+            {mode === 'MANUAL' && <ShieldCheck className="w-3 h-3 text-[#8e8d8a]" />}
+          </button>
 
           {/* 1-Click TR / EN Language Toggle */}
           <div
@@ -175,19 +173,26 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Responsive horizontal scrollable nav bar for tablet / mobile */}
-      <div className="xl:hidden flex items-center overflow-x-auto px-4 sm:px-6 py-2 border-t border-[#1e1e1e] gap-4 text-xs uppercase tracking-wider no-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`whitespace-nowrap pb-1 cursor-pointer transition ${
-              currentTab === tab.id ? 'text-white border-b border-[#c5a880]' : 'text-[#8e8d8a]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Second Row: Full-width Navigation Strip (all 9 tabs visible with zero clipping on desktop) */}
+      <div className="border-t border-[#1e1e1e] bg-[#0b0b0b]/95">
+        <nav className="max-w-7xl w-full mx-auto px-4 sm:px-6 flex items-center justify-start lg:justify-between gap-5 overflow-x-auto no-scrollbar py-2.5 text-[11px] tracking-wider uppercase font-medium">
+          {tabs.map((tab) => {
+            const isActive = currentTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`transition-colors whitespace-nowrap cursor-pointer pb-1 border-b shrink-0 ${
+                  isActive
+                    ? 'text-[#f4f3ef] border-[#c5a880]'
+                    : 'text-[#8e8d8a] border-transparent hover:text-[#d4d4d8]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );
